@@ -854,11 +854,6 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
     }
     else if(World->InstalledPartsCount < ArrayCount(World->Parts))
     {
-        part *Fuel = World->Parts + World->InstalledPartsCount;
-        int32 MinX = (int32)Fuel->P.x;
-        int32 MinY = (int32)Fuel->P.y;
-        PushBitmap(RenderGroup, &GameState->FuelBitmap, MinX, MinY, false, Color_Magenta);
-
         int32 InstalledFuelCount = World->InstalledPartsCount - 3;
 
         for(int32 BitmapIndex = 0;
@@ -868,6 +863,11 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
             color Color = BitmapIndex < InstalledFuelCount ? Color_Magenta : Color_White;
             PushBitmap(RenderGroup, GameState->PartBitmaps + BitmapIndex, ROCKET_X, (int32)World->RocketY + BitmapIndex*TILE_SIZE, false, Color);
         }
+
+        part *Fuel = World->Parts + World->InstalledPartsCount;
+        int32 MinX = (int32)Fuel->P.x;
+        int32 MinY = (int32)Fuel->P.y;
+        PushBitmap(RenderGroup, &GameState->FuelBitmap, MinX, MinY, false, Color_Magenta);
     }
     else
     {
