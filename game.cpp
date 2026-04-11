@@ -197,6 +197,100 @@ UInt32ToString(uint32 Value, char *Dest, uint32 Width)
     }
 }
 
+struct try_move_x_result
+{
+    real32 NewX;
+    bool32 Collided;
+};
+
+internal try_move_x_result
+TryMoveX(game_state *GameState, v2 P, real32 Vx, int32 DimX, int32 DimY, real32 dt)
+{
+    try_move_x_result Result = { P.x, false };
+
+    if(Vx != 0.0f)
+    {
+        Result.NewX = P.x + Vx*dt;
+        int32 MinTileY = (int32)P.y/TILE_SIZE;
+        int32 MaxTileY = ((int32)P.y + DimY - 1)/TILE_SIZE;
+        int32 NewTileX;
+        int32 HitX;
+
+        if(Vx > 0.0f)
+        {
+            NewTileX = ((int32)Result.NewX + DimX - 1) / TILE_SIZE;
+            HitX = NewTileX*TILE_SIZE - DimX;
+        }
+        else // if(Vx < 0.0f)
+        {
+            NewTileX = (int32)Result.NewX / TILE_SIZE;
+            HitX = (NewTileX + 1)*TILE_SIZE;
+        }
+
+        for(int32 TileY = MinTileY;
+            TileY <= MaxTileY;
+            ++TileY)
+        {
+            uint8 TileValue = GetTileValueWrapped(GameState, NewTileX, TileY);
+            if(TileValue)
+            {
+                Result.NewX = (real32)HitX;
+                Result.Collided = true;
+                break;
+            }
+        }
+    }
+
+    return(Result);
+}
+
+struct try_move_y_result
+{
+    real32 NewY;
+    bool32 Collided;
+};
+
+internal try_move_y_result
+TryMoveY(game_state *GameState, v2 P, real32 Vy, int32 DimX, int32 DimY, real32 dt)
+{
+    try_move_y_result Result = { P.y, false };
+
+    if(Vy != 0.0f)
+    {
+        Result.NewY = P.y + Vy*dt;
+        int32 MinTileX = (int32)P.x/TILE_SIZE;
+        int32 MaxTileX = ((int32)P.x + DimX - 1)/TILE_SIZE;
+        int32 NewTileY;
+        int32 HitY;
+
+        if(Vy > 0.0f)
+        {
+            NewTileY = ((int32)Result.NewY + DimY - 1) / TILE_SIZE;
+            HitY = NewTileY*TILE_SIZE - DimY;
+        }
+        else // if(Vy < 0.0f)
+        {
+            NewTileY = (int32)Result.NewY / TILE_SIZE;
+            HitY = (NewTileY + 1)*TILE_SIZE;
+        }
+
+        for(int32 TileX = MinTileX;
+            TileX <= MaxTileX;
+            ++TileX)
+        {
+            uint8 TileValue = GetTileValueWrapped(GameState, TileX, NewTileY);
+            if(TileValue)
+            {
+                Result.NewY = (real32)HitY;
+                Result.Collided = true;
+                break;
+            }
+        }
+    }
+
+    return(Result);
+}
+
 internal world *
 AllocateWorld(memory_arena *Arena)
 {
@@ -270,99 +364,46 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
             PlayerForce += Friction;
             Player->V += PlayerForce*Input->dt;
 
-            if(Player->V.x != 0.0f)
+            try_move_x_result TryMoveXResult =
+                TryMoveX(GameState, Player->P, Player->V.x, PLAYER_DIM_X, PLAYER_DIM_Y, Input->dt);
+
+            Player->P.x = TryMoveXResult.NewX;
+
+            if(Player->P.x >= PLAYFIELD_DIM_X)
             {
-                real32 NewX = Player->P.x + Player->V.x*Input->dt;
-                int32 MinTileY = (int32)Player->P.y/TILE_SIZE;
-                int32 MaxTileY = ((int32)Player->P.y + PLAYER_DIM_Y - 1)/TILE_SIZE;
-                int32 NewTileX = -1;
-                int32 HitX = -1;
-
-                if(Player->V.x > 0.0f)
-                {
-                    int32 NewRightX = (int32)NewX + PLAYER_DIM_X - 1;
-                    NewTileX = NewRightX/TILE_SIZE;
-                    int32 HitRightX = NewTileX*TILE_SIZE - 1;
-                    HitX = HitRightX - PLAYER_DIM_X + 1;
-                }
-                else // if(Player->V.x < 0.0f)
-                {
-                    int32 NewLeftX = (int32)NewX;
-                    NewTileX = NewLeftX/TILE_SIZE;
-                    int32 HitLeftX = (NewTileX + 1)*TILE_SIZE;
-                    HitX = HitLeftX;
-                }
-
-                for(int32 TileY = MinTileY;
-                    TileY <= MaxTileY;
-                    ++TileY)
-                {
-                    uint8 TileValue = GetTileValueWrapped(GameState, NewTileX, TileY);
-                    if(TileValue)
-                    {
-                        NewX = (real32)HitX;
-                        Player->V.x = -0.5f*Player->V.x;
-                        break;
-                    }
-                }
-
-                Player->P.x = NewX;
-                if(Player->P.x >= PLAYFIELD_DIM_X)
-                {
-                    Player->P.x -= PLAYFIELD_DIM_X;
-                }
-                else if(Player->P.x < 0.0f)
-                {
-                    Player->P.x += PLAYFIELD_DIM_X;
-                }
+                Player->P.x -= PLAYFIELD_DIM_X;
+            }
+            else if(Player->P.x < 0.0f)
+            {
+                Player->P.x += PLAYFIELD_DIM_X;
             }
 
-            if(Player->V.y != 0.0f)
+            if(TryMoveXResult.Collided)
             {
-                real32 NewY = Player->P.y + Player->V.y*Input->dt;
-                int32 MinTileX = (int32)Player->P.x/TILE_SIZE;
-                int32 MaxTileX = ((int32)Player->P.x + PLAYER_DIM_X - 1)/TILE_SIZE;
+                Player->V.x = -0.5f*Player->V.x;
+            }
+
+            try_move_y_result TryMoveYResult =
+                TryMoveY(GameState, Player->P, Player->V.y, PLAYER_DIM_X, PLAYER_DIM_Y, Input->dt);
+
+            Player->P.y = TryMoveYResult.NewY;
+
+            if(TryMoveYResult.Collided)
+            {
                 if(Player->V.y > 0.0f)
                 {
-                    int32 NewTopY = (int32)NewY + PLAYER_DIM_Y - 1;
-                    int32 NewTileY = NewTopY/TILE_SIZE;
-                    for(int32 TileX = MinTileX;
-                        TileX <= MaxTileX;
-                        ++TileX)
+                    if(Player->V.y < 20.0f)
                     {
-                        uint8 TileValue = GetTileValueWrapped(GameState, TileX, NewTileY);
-                        if(TileValue)
-                        {
-                            NewTopY = NewTileY*TILE_SIZE - 1;
-                            NewY = (real32)(NewTopY - PLAYER_DIM_Y + 1);
-                            if(Player->V.y < 20.0f)
-                            {
-                                Player->V.y = 0.0f;
-                            }
-                            Player->V.y = -0.5f*Player->V.y;
-                            break;
-                        }
+                        Player->V.y = 0.0f;
                     }
+                    Player->V.y = -0.5f*Player->V.y;
                 }
-                else // if(Player->V.y < 0.0f)
+                else
                 {
-                    int32 NewTileY = (int32)NewY/TILE_SIZE;
-                    for(int32 TileX = MinTileX;
-                        TileX <= MaxTileX;
-                        ++TileX)
-                    {
-                        uint8 TileValue = GetTileValueWrapped(GameState, TileX, NewTileY);
-                        if(TileValue)
-                        {
-                            NewY = (real32)((NewTileY + 1)*TILE_SIZE);
-                            Player->IsFlying = false;
-                            Player->FrameTimer = 0.0f;
-                            Player->FrameIndex = 0;
-                            break;
-                        }
-                    }
+                    Player->IsFlying = false;
+                    Player->FrameTimer = 0.0f;
+                    Player->FrameIndex = 0;
                 }
-                Player->P.y = NewY;
             }
 
             Player->FrameTimer += Input->dt;
@@ -908,136 +949,68 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
             {
                 bool32 HitSomething = false;
 
-                if(Enemy->V.x != 0.0f)
+                try_move_x_result TryMoveXResult =
+                    TryMoveX(GameState, Enemy->P, Enemy->V.x, ENEMY_DIM_X, ENEMY_DIM_Y, Input->dt);
+
+                Enemy->P.x = TryMoveXResult.NewX;
+
+                if(TryMoveXResult.Collided)
                 {
-                    real32 NewX = Enemy->P.x + Enemy->V.x*Input->dt;
-                    int32 CheckX;
-                    if(Enemy->V.x > 0.0f)
+                    if(World->EnemyType == EnemyType_Asteroid)
                     {
-                        CheckX = (int32)NewX + ENEMY_DIM_X - 1;
+                        HitSomething = true;
+                    }
+                    else if(World->EnemyType == EnemyType_Face)
+                    {
+                        Enemy->V.x = -Enemy->V.x;
                     }
                     else
                     {
-                        CheckX = (int32)NewX;
+                        Assert(!"Unknown enemy type");
                     }
-                    int32 TileX = CheckX / TILE_SIZE;
-                    int32 MinTileY = (int32)Enemy->P.y / TILE_SIZE;
-                    int32 MaxTileY = ((int32)Enemy->P.y + ENEMY_DIM_Y - 1) / TILE_SIZE;
-                    bool32 CollidedWithTile = false;
-                    for(int32 TileY = MinTileY;
-                        TileY <= MaxTileY;
-                        ++TileY)
+                }
+                else
+                {
+                    if(Enemy->EnteredPlayfield)
                     {
-                        if(GetTileValueWrapped(GameState, TileX, TileY))
+                        if(Enemy->P.x > PLAYFIELD_DIM_X)
                         {
-                            if(Enemy->V.x > 0.0f)
-                            {
-                                NewX = (real32)(TileX*TILE_SIZE - ENEMY_DIM_X);
-                            }
-                            else
-                            {
-                                NewX = (real32)((TileX + 1)*TILE_SIZE);
-                            }
-                            CollidedWithTile = true;
-                            break;
+                            Enemy->P.x -= PLAYFIELD_DIM_X;
                         }
-                    }
-
-                    Enemy->P.x = NewX;
-
-                    if(CollidedWithTile)
-                    {
-                        if(World->EnemyType == EnemyType_Asteroid)
+                        else if(Enemy->P.x < 0.0f)
                         {
-                            HitSomething = true;
-                        }
-                        else if(World->EnemyType == EnemyType_Face)
-                        {
-                            Enemy->V.x = -Enemy->V.x;
-                        }
-                        else
-                        {
-                            Assert(!"Unknown enemy type");
+                            Enemy->P.x += PLAYFIELD_DIM_X;
                         }
                     }
                     else
                     {
-                        if(Enemy->EnteredPlayfield)
+                        real32 MinX = Enemy->P.x;
+                        real32 MaxX = Enemy->P.x + ENEMY_DIM_X;
+                        if((0.0f <= MinX) && (MaxX <= PLAYFIELD_DIM_X))
                         {
-                            if(Enemy->P.x > PLAYFIELD_DIM_X)
-                            {
-                                Enemy->P.x -= PLAYFIELD_DIM_X;
-                            }
-                            else if(Enemy->P.x < 0.0f)
-                            {
-                                Enemy->P.x += PLAYFIELD_DIM_X;
-                            }
-                        }
-                        else
-                        {
-                            real32 MinX = Enemy->P.x;
-                            real32 MaxX = Enemy->P.x + ENEMY_DIM_X;
-                            if((0.0f <= MinX) && (MaxX < PLAYFIELD_DIM_X))
-                            {
-                                Enemy->EnteredPlayfield = true;
-                            }
+                            Enemy->EnteredPlayfield = true;
                         }
                     }
                 }
 
-                if(Enemy->V.y != 0.0f)
+                try_move_y_result TryMoveYResult =
+                    TryMoveY(GameState, Enemy->P, Enemy->V.y, ENEMY_DIM_X, ENEMY_DIM_Y, Input->dt);
+
+                Enemy->P.y = TryMoveYResult.NewY;
+
+                if(TryMoveYResult.Collided)
                 {
-                    real32 NewY = Enemy->P.y + Enemy->V.y*Input->dt;
-                    int32 CheckY;
-                    if(Enemy->V.y > 0.0f)
+                    if(World->EnemyType == EnemyType_Asteroid)
                     {
-                        CheckY = (int32)NewY + ENEMY_DIM_Y - 1;
+                        HitSomething = true;
+                    }
+                    else if(World->EnemyType == EnemyType_Face)
+                    {
+                        Enemy->V.y = -Enemy->V.y;
                     }
                     else
                     {
-                        CheckY = (int32)NewY;
-                    }
-                    int32 TileY = CheckY / TILE_SIZE;
-                    int32 MinTileX = (int32)Enemy->P.x / TILE_SIZE;
-                    int32 MaxTileX = ((int32)Enemy->P.x + ENEMY_DIM_X - 1) / TILE_SIZE;
-                    bool32 CollidedWithTile = false;
-                    for(int32 TileX = MinTileX;
-                        TileX <= MaxTileX;
-                        ++TileX)
-                    {
-                        if(GetTileValueWrapped(GameState, TileX, TileY))
-                        {
-                            if(Enemy->V.y > 0.0f)
-                            {
-                                CheckY = (int32)NewY + ENEMY_DIM_Y - 1;
-                                NewY = (real32)(TileY*TILE_SIZE - ENEMY_DIM_Y);
-                            }
-                            else
-                            {
-                                CheckY = (int32)NewY;
-                                NewY = (real32)((TileY + 1)*TILE_SIZE);
-                            }
-                            CollidedWithTile = true;
-                            break;
-                        }
-                    }
-
-                    Enemy->P.y = NewY;
-
-                    if(CollidedWithTile)
-                    {
-                        if(World->EnemyType == EnemyType_Asteroid)
-                        {
-                            HitSomething = true;
-                        }
-                        else if(World->EnemyType == EnemyType_Face)
-                        {
-                            Enemy->V.y = -Enemy->V.y;
-                        }
-                        else
-                        {
-                            Assert(!"Unknown enemy type");
-                        }
+                        Assert(!"Unknown enemy type");
                     }
                 }
 
