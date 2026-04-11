@@ -197,6 +197,20 @@ UInt32ToString(uint32 Value, char *Dest, uint32 Width)
     }
 }
 
+inline real32
+WrapX(real32 X)
+{
+    if(X >= PLAYFIELD_DIM_X)
+    {
+        X -= PLAYFIELD_DIM_X;
+    }
+    else if(X < 0.0f)
+    {
+        X += PLAYFIELD_DIM_X;
+    }
+    return(X);
+}
+
 struct try_move_x_result
 {
     real32 NewX;
@@ -366,18 +380,7 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
 
             try_move_x_result TryMoveXResult =
                 TryMoveX(GameState, Player->P, Player->V.x, PLAYER_DIM_X, PLAYER_DIM_Y, Input->dt);
-
-            Player->P.x = TryMoveXResult.NewX;
-
-            if(Player->P.x >= PLAYFIELD_DIM_X)
-            {
-                Player->P.x -= PLAYFIELD_DIM_X;
-            }
-            else if(Player->P.x < 0.0f)
-            {
-                Player->P.x += PLAYFIELD_DIM_X;
-            }
-
+            Player->P.x = WrapX(TryMoveXResult.NewX);
             if(TryMoveXResult.Collided)
             {
                 Player->V.x = -0.5f*Player->V.x;
@@ -385,9 +388,7 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
 
             try_move_y_result TryMoveYResult =
                 TryMoveY(GameState, Player->P, Player->V.y, PLAYER_DIM_X, PLAYER_DIM_Y, Input->dt);
-
             Player->P.y = TryMoveYResult.NewY;
-
             if(TryMoveYResult.Collided)
             {
                 if(Player->V.y > 0.0f)
@@ -438,14 +439,7 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
             }
 
             Player->P += Player->V*Input->dt;
-            if(Player->P.x >= PLAYFIELD_DIM_X)
-            {
-                Player->P.x -= PLAYFIELD_DIM_X;
-            }
-            else if(Player->P.x < 0.0f)
-            {
-                Player->P.x += PLAYFIELD_DIM_X;
-            }
+            Player->P.x = WrapX(Player->P.x);
 
             int32 MinTileX = (int32)Player->P.x/TILE_SIZE;
             int32 MaxTileX = ((int32)Player->P.x + PLAYER_DIM_X - 1)/TILE_SIZE;
@@ -973,14 +967,7 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
                 {
                     if(Enemy->EnteredPlayfield)
                     {
-                        if(Enemy->P.x > PLAYFIELD_DIM_X)
-                        {
-                            Enemy->P.x -= PLAYFIELD_DIM_X;
-                        }
-                        else if(Enemy->P.x < 0.0f)
-                        {
-                            Enemy->P.x += PLAYFIELD_DIM_X;
-                        }
+                        Enemy->P.x = WrapX(Enemy->P.x);
                     }
                     else
                     {
