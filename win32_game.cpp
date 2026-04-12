@@ -63,17 +63,28 @@ internal void
 Win32DisplayBackbuffer(win32_backbuffer *Backbuffer, HDC DeviceContext,
                        int32 ClientWidth, int32 ClientHeight)
 {
-    int32 OutputWidth = Backbuffer->Scale*Backbuffer->Width;
-    int32 OutputHeight = Backbuffer->Scale*Backbuffer->Height;
+    int32 ScaleX = Maximum(ClientWidth / Backbuffer->Width, 1);
+    int32 ScaleY = Maximum(ClientHeight / Backbuffer->Height, 1);
+    int32 Scale = Minimum(ScaleX, ScaleY);
+
+    int32 OutputWidth = Scale*Backbuffer->Width;
+    int32 OutputHeight = Scale*Backbuffer->Height;
+
+    int32 OffsetX = Maximum((ClientWidth - OutputWidth) / 2, 0);
+    int32 OffsetY = Maximum((ClientHeight - OutputHeight) / 2, 0);
 
     DWORD BorderOp = BLACKNESS;
-    // NOTE(slava): Bottom border
-    PatBlt(DeviceContext, 0, OutputHeight, ClientWidth, ClientHeight - OutputHeight, BorderOp);
+    // NOTE(slava): Left border
+    PatBlt(DeviceContext, 0, 0, OffsetX, ClientHeight, BorderOp);
     // NOTE(slava): Right border
-    PatBlt(DeviceContext, OutputWidth, 0, ClientWidth - OutputWidth, ClientHeight, BorderOp);
+    PatBlt(DeviceContext, OffsetX + OutputWidth, 0, OffsetX, ClientHeight, BorderOp);
+    // NOTE(slava): Top border
+    PatBlt(DeviceContext, 0, 0, ClientWidth, OffsetY, BorderOp);
+    // NOTE(slava): Bottom border
+    PatBlt(DeviceContext, 0, OffsetY + OutputHeight, ClientWidth, OffsetY, BorderOp);
 
     StretchDIBits(DeviceContext,
-                  0, 0, OutputWidth, OutputHeight,
+                  OffsetX, OffsetY, OutputWidth, OutputHeight,
                   0, 0, Backbuffer->Width, Backbuffer->Height,
                   Backbuffer->Memory, &Backbuffer->Info, DIB_RGB_COLORS, SRCCOPY);
 }
@@ -290,7 +301,6 @@ WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, char *CommandLine, int ShowC
 
     Backbuffer->Width = 256;
     Backbuffer->Height = 192;
-    Backbuffer->Scale = 4;
     Backbuffer->Pitch = Backbuffer->Width*BITMAP_BYTES_PER_PIXEL;
 
     Backbuffer->Info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -325,7 +335,8 @@ WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, char *CommandLine, int ShowC
     Assert(WindowClassAtom);
 
     DWORD WindowStyle = WS_OVERLAPPEDWINDOW|WS_VISIBLE;
-    RECT WindowRect = {0, 0, Backbuffer->Scale*Backbuffer->Width, Backbuffer->Scale*Backbuffer->Height};
+    int32 BackbufferScale = 4;
+    RECT WindowRect = {0, 0, BackbufferScale*Backbuffer->Width, BackbufferScale*Backbuffer->Height};
     AdjustWindowRect(&WindowRect, WindowStyle, false);
 
     HWND Window = CreateWindowExA(0, WindowClass.lpszClassName, "My Game",

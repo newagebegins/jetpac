@@ -10,7 +10,6 @@ struct win32_backbuffer
     int32 Pitch;
     void *Memory;
     BITMAPINFO Info;
-    int32 Scale;
 };
 
 struct win32_game
