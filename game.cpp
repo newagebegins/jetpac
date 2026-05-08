@@ -659,9 +659,7 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
                 real32 MaxY = PLAYFIELD_DIM_Y - ENEMY_DIM_Y;
                 real32 Y = RandomBetween(&World->Series, MinY, MaxY);
                 Enemy->P = {X, Y};
-                real32 AngleDeg = RandomBetween(&World->Series, -45.0f, 45.0f);
-                real32 AngleRad = DegreesToRadians*AngleDeg;
-                v2 Direction = DirX*V2(Cos(AngleRad), Sin(AngleRad));
+                v2 Direction = Normalize(V2(DirX, RandomBetween(&World->Series, -1.0f, 1.0f)));
                 real32 Speed = 67.0f;
                 Enemy->V = Speed*Direction;
                 Enemy->Color = RandomPick(&World->Series, EnemyColors);
@@ -1141,7 +1139,7 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
     return(GameOver);
 }
 
-GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
+extern "C" GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
 {
     DEBUGPlatformReadEntireFile = Memory->DEBUGPlatformReadEntireFile;
 

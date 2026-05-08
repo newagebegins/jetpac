@@ -1,6 +1,7 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 #define global_variable static
@@ -43,9 +44,9 @@ typedef double real64;
 #define ArrayCount(A) (sizeof(A)/sizeof(A[0]))
 
 #if GAME_SLOW
-#define Assert(Expression) if(!(Expression)) { *(int *)0 = 0; }
+#define Assert(Expression) if(!(Expression)) { *(volatile int *)0 = 0; }
 #else
-#define Assert
+#define Assert(Expression)
 #endif
 
 #define InvalidCodePath Assert(!"Invalid code path")
