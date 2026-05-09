@@ -43,26 +43,19 @@ DrawRect(game_bitmap *Bitmap, int32 MinX, int32 MinY, int32 MaxX, int32 MaxY,
 
 internal void
 DrawBitmap(game_bitmap *Output, game_bitmap *Bitmap, int32 MinX, int32 MinY,
-           bool32 FlipX = false, v3 Color = {1.0f, 1.0f, 1.0f}, rectangle2i *ClipRect = 0)
+           bool32 FlipX = false, v3 Color = {1.0f, 1.0f, 1.0f},
+           v2 UVOffset = {0.0f, 0.0f}, v2 UVScale = {1.0f, 1.0f})
 {
-    int32 MaxX = MinX + Bitmap->Width;
-    int32 MaxY = MinY + Bitmap->Height;
+    int32 MaxX = MinX + FloorReal32ToInt32(UVScale.x*(r32)Bitmap->Width);
+    int32 MaxY = MinY + FloorReal32ToInt32(UVScale.y*(r32)Bitmap->Height);
 
     int32 ClipMinX = 0;
     int32 ClipMaxX = Output->Width;
     int32 ClipMinY = 0;
     int32 ClipMaxY = Output->Height;
 
-    if(ClipRect)
-    {
-        ClipMinX = Maximum(ClipRect->MinX, ClipMinX);
-        ClipMaxX = Minimum(ClipRect->MaxX, ClipMaxX);
-        ClipMinY = Maximum(ClipRect->MinY, ClipMinY);
-        ClipMaxY = Minimum(ClipRect->MaxY, ClipMaxY);
-    }
-
-    int32 AdvanceX = 0;
-    int32 AdvanceY = 0;
+    int32 AdvanceX = FloorReal32ToInt32(UVOffset.x*(r32)Bitmap->Width);
+    int32 AdvanceY = FloorReal32ToInt32(UVOffset.y*(r32)Bitmap->Height);
 
     if(MinX < ClipMinX)
     {
@@ -255,7 +248,7 @@ PushRect(render_group *Group, rectangle2i Rect, color Color = Color_White, bool3
 internal void
 PushBitmap(render_group *Group, game_bitmap *Bitmap, int32 MinX, int32 MinY,
            bool32 Flip = false, color Color = Color_White, bool32 WrapX = true,
-           rectangle2i *ClipRect = 0)
+           v2 UVOffset = {0.0f, 0.0f}, v2 UVScale = {1.0f, 1.0f})
 {
     render_entry_base *Base = PushStruct(&Group->Arena, render_entry_base);
     Base->ID = RenderEntry_Bitmap;
@@ -267,20 +260,25 @@ PushBitmap(render_group *Group, game_bitmap *Bitmap, int32 MinX, int32 MinY,
     Entry->Flip = Flip;
     Entry->Color = Color;
     Entry->WrapX = WrapX;
-    Entry->ClipRect = ClipRect;
+    Entry->UVOffset = UVOffset;
+    Entry->UVScale = UVScale;
 }
 
 internal void
 PushString(render_group *Group, char *String, int32 X, int32 Y, color Color)
 {
-    render_entry_base *Base = PushStruct(&Group->Arena, render_entry_base);
-    Base->ID = RenderEntry_String;
-
-    render_entry_string *Entry = PushStruct(&Group->Arena, render_entry_string);
-    Entry->String = String;
-    Entry->X = X;
-    Entry->Y = Y;
-    Entry->Color = Color;
+    int32 DestX = X;
+    for(char *Letter = String;
+        *Letter;
+        ++Letter)
+    {
+        int32 SourceX = (*Letter - ' ')*TILE_SIZE;
+        v2 UVOffset = {(r32)SourceX/Group->FontBitmap->Width, 0.0f};
+        v2 UVScale = {(r32)TILE_SIZE/(r32)Group->FontBitmap->Width, 1.0f};
+        PushBitmap(Group, Group->FontBitmap, DestX, Y,
+                   false, Color, false, UVOffset, UVScale);
+        DestX += TILE_SIZE;
+    }
 }
 
 inline v3
@@ -365,37 +363,20 @@ RenderGroupToOutput(render_group *Group)
             {
                 render_entry_bitmap *Entry = (render_entry_bitmap *)(Base + 1);
                 v3 Color = Group->Palette[Entry->Color];
-                DrawBitmap(Group->OutputBitmap, Entry->Bitmap, Entry->MinX, Entry->MinY, Entry->Flip, Color, Entry->ClipRect);
+                DrawBitmap(Group->OutputBitmap, Entry->Bitmap, Entry->MinX, Entry->MinY, Entry->Flip, Color, Entry->UVOffset, Entry->UVScale);
                 if(Entry->WrapX)
                 {
                     if(Entry->MinX < 0)
                     {
                         Entry->MinX += Group->OutputBitmap->Width;
-                        if(Entry->ClipRect)
-                        {
-                            Entry->ClipRect->MinX += Group->OutputBitmap->Width;
-                            Entry->ClipRect->MaxX += Group->OutputBitmap->Width;
-                        }
-                        DrawBitmap(Group->OutputBitmap, Entry->Bitmap, Entry->MinX, Entry->MinY, Entry->Flip, Color, Entry->ClipRect);
+                        DrawBitmap(Group->OutputBitmap, Entry->Bitmap, Entry->MinX, Entry->MinY, Entry->Flip, Color, Entry->UVOffset, Entry->UVScale);
                     }
                     else if(Entry->MinX + Entry->Bitmap->Width > Group->OutputBitmap->Width)
                     {
                         Entry->MinX -= Group->OutputBitmap->Width;
-                        if(Entry->ClipRect)
-                        {
-                            Entry->ClipRect->MinX -= Group->OutputBitmap->Width;
-                            Entry->ClipRect->MaxX -= Group->OutputBitmap->Width;
-                        }
-                        DrawBitmap(Group->OutputBitmap, Entry->Bitmap, Entry->MinX, Entry->MinY, Entry->Flip, Color, Entry->ClipRect);
+                        DrawBitmap(Group->OutputBitmap, Entry->Bitmap, Entry->MinX, Entry->MinY, Entry->Flip, Color, Entry->UVOffset, Entry->UVScale);
                     }
                 }
-                Base = (render_entry_base *)(Entry + 1);
-            } break;
-
-            case RenderEntry_String:
-            {
-                render_entry_string *Entry = (render_entry_string *)(Base + 1);
-                DrawString(Group->OutputBitmap, Group->FontBitmap, Entry->String, Entry->X, Entry->Y, Group->Palette[Entry->Color]);
                 Base = (render_entry_base *)(Entry + 1);
             } break;
 

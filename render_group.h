@@ -55,15 +55,8 @@ struct render_entry_bitmap
     bool32 Flip;
     color Color;
     bool32 WrapX;
-    rectangle2i *ClipRect;
-};
-
-struct render_entry_string
-{
-    char *String;
-    int32 X;
-    int32 Y;
-    color Color;
+    v2 UVOffset;
+    v2 UVScale;
 };
 
 struct render_group

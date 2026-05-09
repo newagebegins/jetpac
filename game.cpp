@@ -557,8 +557,8 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
             real32 StepLength = LaserSpeed*Input->dt;
             real32 dX = Laser->DirX*StepLength;
 
-            rectangle2i *ClipRect = PushStruct(TranArena, rectangle2i);
-            int32 BitmapMinX;
+            r32 UOffset;
+            r32 UScale;
 
             if(Laser->DistanceTraveled < MaxLaserDistance)
             {
@@ -587,11 +587,15 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
                 if(Laser->DirX > 0)
                 {
                     int32 MaxX = (int32)Laser->HeadX + 1;
-                    BitmapMinX = MaxX - GameState->LaserBitmap.Width;
+                    r32 LaserWidth = Laser->HeadX - Laser->TailX;
+                    UScale = LaserWidth / (r32)GameState->LaserBitmap.Width;
+                    UOffset = 1.0f - UScale;
                 }
                 else
                 {
-                    BitmapMinX = (int32)Laser->HeadX;
+                    r32 LaserWidth = Laser->TailX - Laser->HeadX;
+                    UScale = LaserWidth / (r32)GameState->LaserBitmap.Width;
+                    UOffset = 0.0f;
                 }
             }
             else
@@ -606,18 +610,25 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
 
                 if(Laser->DirX > 0)
                 {
-                    BitmapMinX = (int32)Laser->TailX;
+                    r32 LaserWidth = Laser->HeadX - Laser->TailX;
+                    UScale = LaserWidth / (r32)GameState->LaserBitmap.Width;
+                    UOffset = 0.0f;
                 }
                 else
                 {
                     int32 MaxX = (int32)Laser->TailX + 1;
-                    BitmapMinX = MaxX - GameState->LaserBitmap.Width;
+                    r32 LaserWidth = Laser->TailX - Laser->HeadX;
+                    UScale = LaserWidth / (r32)GameState->LaserBitmap.Width;
+                    UOffset = 1.0f - UScale;
                 }
             }
 
-            *ClipRect = GetLaserRect(Laser);
-            PushBitmap(RenderGroup, &GameState->LaserBitmap, BitmapMinX, Laser->Y,
-                       Laser->DirX < 0, Laser->Color, true, ClipRect);
+            v2 UVOffset = {UOffset, 0.0f};
+            v2 UVScale = {UScale, 1.0f};
+
+            rectangle2i LaserRect = GetLaserRect(Laser);
+            PushBitmap(RenderGroup, &GameState->LaserBitmap, LaserRect.MinX, Laser->Y,
+                       Laser->DirX < 0, Laser->Color, true, UVOffset, UVScale);
         }
     }
 
