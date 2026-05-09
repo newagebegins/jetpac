@@ -54,7 +54,6 @@ struct render_entry_bitmap
     int32 MinX, MinY;
     bool32 Flip;
     color Color;
-    bool32 WrapX;
     v2 UVOffset;
     v2 UVScale;
 };

@@ -259,9 +259,22 @@ PushBitmap(render_group *Group, game_bitmap *Bitmap, int32 MinX, int32 MinY,
     Entry->MinY = MinY;
     Entry->Flip = Flip;
     Entry->Color = Color;
-    Entry->WrapX = WrapX;
     Entry->UVOffset = UVOffset;
     Entry->UVScale = UVScale;
+
+    if(WrapX)
+    {
+        if(MinX < 0)
+        {
+            MinX += Group->OutputBitmap->Width;
+            PushBitmap(Group, Bitmap, MinX, MinY, Flip, Color, false, UVOffset, UVScale);
+        }
+        else if(MinX + Bitmap->Width > Group->OutputBitmap->Width)
+        {
+            MinX -= Group->OutputBitmap->Width;
+            PushBitmap(Group, Bitmap, MinX, MinY, Flip, Color, false, UVOffset, UVScale);
+        }
+    }
 }
 
 internal void
@@ -364,19 +377,6 @@ RenderGroupToOutput(render_group *Group)
                 render_entry_bitmap *Entry = (render_entry_bitmap *)(Base + 1);
                 v3 Color = Group->Palette[Entry->Color];
                 DrawBitmap(Group->OutputBitmap, Entry->Bitmap, Entry->MinX, Entry->MinY, Entry->Flip, Color, Entry->UVOffset, Entry->UVScale);
-                if(Entry->WrapX)
-                {
-                    if(Entry->MinX < 0)
-                    {
-                        Entry->MinX += Group->OutputBitmap->Width;
-                        DrawBitmap(Group->OutputBitmap, Entry->Bitmap, Entry->MinX, Entry->MinY, Entry->Flip, Color, Entry->UVOffset, Entry->UVScale);
-                    }
-                    else if(Entry->MinX + Entry->Bitmap->Width > Group->OutputBitmap->Width)
-                    {
-                        Entry->MinX -= Group->OutputBitmap->Width;
-                        DrawBitmap(Group->OutputBitmap, Entry->Bitmap, Entry->MinX, Entry->MinY, Entry->Flip, Color, Entry->UVOffset, Entry->UVScale);
-                    }
-                }
                 Base = (render_entry_base *)(Entry + 1);
             } break;
 
