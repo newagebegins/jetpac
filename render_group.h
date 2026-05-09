@@ -52,7 +52,6 @@ struct render_entry_bitmap
 {
     game_bitmap *Bitmap;
     int32 MinX, MinY;
-    bool32 Flip;
     color Color;
     v2 UVOffset;
     v2 UVScale;

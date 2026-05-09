@@ -43,10 +43,10 @@ DrawRect(game_bitmap *Bitmap, int32 MinX, int32 MinY, int32 MaxX, int32 MaxY,
 
 internal void
 DrawBitmap(game_bitmap *Output, game_bitmap *Bitmap, int32 MinX, int32 MinY,
-           bool32 FlipX = false, v3 Color = {1.0f, 1.0f, 1.0f},
+           v3 Color = {1.0f, 1.0f, 1.0f},
            v2 UVOffset = {0.0f, 0.0f}, v2 UVScale = {1.0f, 1.0f})
 {
-    int32 MaxX = MinX + FloorReal32ToInt32(UVScale.x*(r32)Bitmap->Width);
+    int32 MaxX = MinX + FloorReal32ToInt32(AbsoluteValue(UVScale.x)*(r32)Bitmap->Width);
     int32 MaxY = MinY + FloorReal32ToInt32(UVScale.y*(r32)Bitmap->Height);
 
     int32 ClipMinX = 0;
@@ -54,17 +54,19 @@ DrawBitmap(game_bitmap *Output, game_bitmap *Bitmap, int32 MinX, int32 MinY,
     int32 ClipMinY = 0;
     int32 ClipMaxY = Output->Height;
 
-    int32 AdvanceX = FloorReal32ToInt32(UVOffset.x*(r32)Bitmap->Width);
-    int32 AdvanceY = FloorReal32ToInt32(UVOffset.y*(r32)Bitmap->Height);
+    s32 SourceStartX = FloorReal32ToInt32(UVOffset.x*(r32)Bitmap->Width);
+    s32 SourceStartY = FloorReal32ToInt32(UVOffset.y*(r32)Bitmap->Height);
+    s32 SourceAdvanceX = (s32)SignOf(UVScale.x);
+    s32 SourceAdvanceY = (s32)SignOf(UVScale.y);
 
     if(MinX < ClipMinX)
     {
-        AdvanceX = ClipMinX - MinX;
+        SourceStartX += SourceAdvanceX*(ClipMinX - MinX);
         MinX = ClipMinX;
     }
     if(MinY < ClipMinY)
     {
-        AdvanceY = ClipMinY - MinY;
+        SourceStartY += SourceAdvanceY*(ClipMinY - MinY);
         MinY = ClipMinY;
     }
     if(MaxX > ClipMaxX)
@@ -75,21 +77,21 @@ DrawBitmap(game_bitmap *Output, game_bitmap *Bitmap, int32 MinX, int32 MinY,
     {
         MaxY = ClipMaxY;
     }
-    
-    uint8 *DestRow = (uint8 *)Output->Pixels + MinY*Output->Pitch + MinX*BITMAP_BYTES_PER_PIXEL;
-    uint8 *SourceRow = (uint8 *)Bitmap->Pixels + AdvanceY*Bitmap->Pitch;
 
-    int32 SourceAdvance = 1;
-    if(FlipX)
+    if(SourceStartX >= Bitmap->Width)
     {
-        SourceRow += Bitmap->Pitch - BITMAP_BYTES_PER_PIXEL;
-        SourceRow -= AdvanceX*BITMAP_BYTES_PER_PIXEL;
-        SourceAdvance = -1;
+        SourceStartX = Bitmap->Width - 1;
     }
-    else
+    else if(SourceStartX < 0)
     {
-        SourceRow += AdvanceX*BITMAP_BYTES_PER_PIXEL;
+        SourceStartX = 0;
     }
+
+    Assert(SourceStartY >= 0);
+    Assert(SourceStartY < Bitmap->Height);
+
+    uint8 *DestRow = (uint8 *)Output->Pixels + MinY*Output->Pitch + MinX*BITMAP_BYTES_PER_PIXEL;
+    uint8 *SourceRow = (uint8 *)Bitmap->Pixels + SourceStartY*Bitmap->Pitch + SourceStartX*BITMAP_BYTES_PER_PIXEL;
 
     for(int32 Y = MinY;
         Y < MaxY;
@@ -123,7 +125,7 @@ DrawBitmap(game_bitmap *Output, game_bitmap *Bitmap, int32 MinX, int32 MinY,
             }
 
             Dest++;
-            Source += SourceAdvance;
+            Source += SourceAdvanceX;
         }
         SourceRow += Bitmap->Pitch;
         DestRow += Output->Pitch;
@@ -164,32 +166,38 @@ PushRect(render_group *Group, rectangle2i Rect, color Color = Color_White, bool3
 
 internal void
 PushBitmap(render_group *Group, game_bitmap *Bitmap, int32 MinX, int32 MinY,
-           bool32 Flip = false, color Color = Color_White, bool32 WrapX = true,
+           bool32 MirrorX = false, color Color = Color_White, bool32 WrapX = true,
            v2 UVOffset = {0.0f, 0.0f}, v2 UVScale = {1.0f, 1.0f})
 {
     render_entry_base *Base = PushStruct(&Group->Arena, render_entry_base);
     Base->ID = RenderEntry_Bitmap;
 
+    if(MirrorX)
+    {
+        UVOffset.x = 1.0f - UVOffset.x;
+        UVScale.x *= -1.0f;
+    }
+
     render_entry_bitmap *Entry = PushStruct(&Group->Arena, render_entry_bitmap);
     Entry->Bitmap = Bitmap;
     Entry->MinX = MinX;
     Entry->MinY = MinY;
-    Entry->Flip = Flip;
     Entry->Color = Color;
     Entry->UVOffset = UVOffset;
     Entry->UVScale = UVScale;
 
     if(WrapX)
     {
+        int32 MaxX = MinX + FloorReal32ToInt32(AbsoluteValue(UVScale.x)*(r32)Bitmap->Width);
         if(MinX < 0)
         {
             MinX += Group->OutputBitmap->Width;
-            PushBitmap(Group, Bitmap, MinX, MinY, Flip, Color, false, UVOffset, UVScale);
+            PushBitmap(Group, Bitmap, MinX, MinY, false, Color, false, UVOffset, UVScale);
         }
-        else if(MinX + Bitmap->Width > Group->OutputBitmap->Width)
+        else if(MaxX > Group->OutputBitmap->Width)
         {
             MinX -= Group->OutputBitmap->Width;
-            PushBitmap(Group, Bitmap, MinX, MinY, Flip, Color, false, UVOffset, UVScale);
+            PushBitmap(Group, Bitmap, MinX, MinY, false, Color, false, UVOffset, UVScale);
         }
     }
 }
@@ -197,6 +205,7 @@ PushBitmap(render_group *Group, game_bitmap *Bitmap, int32 MinX, int32 MinY,
 internal void
 PushString(render_group *Group, char *String, int32 X, int32 Y, color Color)
 {
+    v2 UVScale = {(r32)TILE_SIZE/(r32)Group->FontBitmap->Width, 1.0f};
     int32 DestX = X;
     for(char *Letter = String;
         *Letter;
@@ -204,7 +213,6 @@ PushString(render_group *Group, char *String, int32 X, int32 Y, color Color)
     {
         int32 SourceX = (*Letter - ' ')*TILE_SIZE;
         v2 UVOffset = {(r32)SourceX/Group->FontBitmap->Width, 0.0f};
-        v2 UVScale = {(r32)TILE_SIZE/(r32)Group->FontBitmap->Width, 1.0f};
         PushBitmap(Group, Group->FontBitmap, DestX, Y,
                    false, Color, false, UVOffset, UVScale);
         DestX += TILE_SIZE;
@@ -293,7 +301,7 @@ RenderGroupToOutput(render_group *Group)
             {
                 render_entry_bitmap *Entry = (render_entry_bitmap *)(Base + 1);
                 v3 Color = Group->Palette[Entry->Color];
-                DrawBitmap(Group->OutputBitmap, Entry->Bitmap, Entry->MinX, Entry->MinY, Entry->Flip, Color, Entry->UVOffset, Entry->UVScale);
+                DrawBitmap(Group->OutputBitmap, Entry->Bitmap, Entry->MinX, Entry->MinY, Color, Entry->UVOffset, Entry->UVScale);
                 Base = (render_entry_base *)(Entry + 1);
             } break;
 
