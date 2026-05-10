@@ -26,6 +26,20 @@ union v3
     {
         real32 r, g, b;
     };
+    real32 E[3];
+};
+
+union v4
+{
+    struct
+    {
+        real32 x, y, z, w;
+    };
+    struct
+    {
+        real32 r, g, b, a;
+    };
+    real32 E[4];
 };
 
 struct rectangle2i

@@ -52,7 +52,7 @@ struct render_entry_bitmap
 {
     game_bitmap *Bitmap;
     int32 MinX, MinY;
-    color Color;
+    v4 Color;
     v2 UVOffset;
     v2 UVScale;
 };
@@ -61,7 +61,7 @@ struct render_group
 {
     memory_arena Arena;
     game_bitmap *OutputBitmap;
-    v3 Palette[Color_Count];
+    v4 Palette[Color_Count];
     game_bitmap *FontBitmap;
 };
 

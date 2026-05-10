@@ -1,6 +1,6 @@
 internal void
 DrawRect(game_bitmap *Bitmap, int32 MinX, int32 MinY, int32 MaxX, int32 MaxY,
-         v3 Color = {1.0f, 1.0f, 1.0f})
+         v4 Color = {1.0f, 1.0f, 1.0f, 1.0f})
 {
     if(MinX < 0)
     {
@@ -43,7 +43,7 @@ DrawRect(game_bitmap *Bitmap, int32 MinX, int32 MinY, int32 MaxX, int32 MaxY,
 
 internal void
 DrawBitmap(game_bitmap *Output, game_bitmap *Bitmap, int32 MinX, int32 MinY,
-           v3 Color = {1.0f, 1.0f, 1.0f},
+           v4 Color = {1.0f, 1.0f, 1.0f, 1.0f},
            v2 UVOffset = {0.0f, 0.0f}, v2 UVScale = {1.0f, 1.0f})
 {
     int32 MaxX = MinX + FloorReal32ToInt32(AbsoluteValue(UVScale.x)*(r32)Bitmap->Width);
@@ -182,7 +182,7 @@ PushBitmap(render_group *Group, game_bitmap *Bitmap, int32 MinX, int32 MinY,
     Entry->Bitmap = Bitmap;
     Entry->MinX = MinX;
     Entry->MinY = MinY;
-    Entry->Color = Color;
+    Entry->Color = Group->Palette[Color];
     Entry->UVOffset = UVOffset;
     Entry->UVScale = UVScale;
 
@@ -219,14 +219,15 @@ PushString(render_group *Group, char *String, int32 X, int32 Y, color Color)
     }
 }
 
-inline v3
-ColorUintToV3(uint32 Color)
+inline v4
+ColorUInt32ToV4(uint32 Color)
 {
-    v3 Result;
+    v4 Result;
     real32 Inv255 = 1.0f / 255.0f;
     Result.r = (real32)((Color >> 16) & 0xFF)*Inv255;
     Result.g = (real32)((Color >> 8) & 0xFF)*Inv255;
     Result.b = (real32)((Color >> 0) & 0xFF)*Inv255;
+    Result.a = 1.0f;
     return(Result);
 }
 
@@ -238,20 +239,20 @@ AllocateRenderGroup(memory_arena *Arena, memory_index PushBufferSize, game_bitma
     Group->Arena = SubArena(Arena, PushBufferSize);
     Group->OutputBitmap = OutputBitmap;
 
-    Group->Palette[Color_Black] = ColorUintToV3(0x000000);
-    Group->Palette[Color_Blue] = ColorUintToV3(0x0000C0);
-    Group->Palette[Color_Red] = ColorUintToV3(0xC00000);
-    Group->Palette[Color_Magenta] = ColorUintToV3(0xC000C0);
-    Group->Palette[Color_Green] = ColorUintToV3(0x00C000);
-    Group->Palette[Color_Cyan] = ColorUintToV3(0x00C0C0);
-    Group->Palette[Color_Yellow] = ColorUintToV3(0xC0C000);
-    Group->Palette[Color_White] = ColorUintToV3(0xFFFFFF);
-    Group->Palette[Color_BrightBlue] = ColorUintToV3(0x0000FF);
-    Group->Palette[Color_BrightRed] = ColorUintToV3(0xFF0000);
-    Group->Palette[Color_BrightMagenta] = ColorUintToV3(0xFF00FF);
-    Group->Palette[Color_BrightGreen] = ColorUintToV3(0x00FF00);
-    Group->Palette[Color_BrightCyan] = ColorUintToV3(0x00FFFF);
-    Group->Palette[Color_BrightYellow] = ColorUintToV3(0xFFFF00);
+    Group->Palette[Color_Black] = ColorUInt32ToV4(0x000000);
+    Group->Palette[Color_Blue] = ColorUInt32ToV4(0x0000C0);
+    Group->Palette[Color_Red] = ColorUInt32ToV4(0xC00000);
+    Group->Palette[Color_Magenta] = ColorUInt32ToV4(0xC000C0);
+    Group->Palette[Color_Green] = ColorUInt32ToV4(0x00C000);
+    Group->Palette[Color_Cyan] = ColorUInt32ToV4(0x00C0C0);
+    Group->Palette[Color_Yellow] = ColorUInt32ToV4(0xC0C000);
+    Group->Palette[Color_White] = ColorUInt32ToV4(0xFFFFFF);
+    Group->Palette[Color_BrightBlue] = ColorUInt32ToV4(0x0000FF);
+    Group->Palette[Color_BrightRed] = ColorUInt32ToV4(0xFF0000);
+    Group->Palette[Color_BrightMagenta] = ColorUInt32ToV4(0xFF00FF);
+    Group->Palette[Color_BrightGreen] = ColorUInt32ToV4(0x00FF00);
+    Group->Palette[Color_BrightCyan] = ColorUInt32ToV4(0x00FFFF);
+    Group->Palette[Color_BrightYellow] = ColorUInt32ToV4(0xFFFF00);
 
     Group->FontBitmap = FontBitmap;
 
@@ -277,7 +278,7 @@ RenderGroupToOutput(render_group *Group)
             case RenderEntry_Rect:
             {
                 render_entry_rect *Entry = (render_entry_rect *)(Base + 1);
-                v3 Color = Group->Palette[Entry->Color];
+                v4 Color = Group->Palette[Entry->Color];
                 DrawRect(Group->OutputBitmap, Entry->MinX, Entry->MinY, Entry->MaxX, Entry->MaxY, Color);
                 if(Entry->WrapX)
                 {
@@ -300,8 +301,7 @@ RenderGroupToOutput(render_group *Group)
             case RenderEntry_Bitmap:
             {
                 render_entry_bitmap *Entry = (render_entry_bitmap *)(Base + 1);
-                v3 Color = Group->Palette[Entry->Color];
-                DrawBitmap(Group->OutputBitmap, Entry->Bitmap, Entry->MinX, Entry->MinY, Color, Entry->UVOffset, Entry->UVScale);
+                DrawBitmap(Group->OutputBitmap, Entry->Bitmap, Entry->MinX, Entry->MinY, Entry->Color, Entry->UVOffset, Entry->UVScale);
                 Base = (render_entry_base *)(Entry + 1);
             } break;
 
