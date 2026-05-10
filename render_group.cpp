@@ -26,14 +26,14 @@ PushRect(render_group *Group, int32 MinX, int32 MinY, int32 MaxX, int32 MaxY,
     {
         if(MinX < 0)
         {
-            MinX += Group->OutputBitmap->Width;
-            MaxX += Group->OutputBitmap->Width;
+            MinX += BACKBUFFER_WIDTH;
+            MaxX += BACKBUFFER_WIDTH;
             PushRect(Group, MinX, MinY, MaxX, MaxY, Color, false);
         }
-        else if(MaxX > Group->OutputBitmap->Width)
+        else if(MaxX > BACKBUFFER_WIDTH)
         {
-            MaxX -= Group->OutputBitmap->Width;
-            MinX -= Group->OutputBitmap->Width;
+            MaxX -= BACKBUFFER_WIDTH;
+            MinX -= BACKBUFFER_WIDTH;
             PushRect(Group, MinX, MinY, MaxX, MaxY, Color, false);
         }
     }
@@ -102,12 +102,12 @@ PushBitmap(render_group *Group, bitmap_id ID, int32 MinX, int32 MinY,
         int32 MaxX = MinX + VisibleWidth;
         if(MinX < 0)
         {
-            MinX += Group->OutputBitmap->Width;
+            MinX += BACKBUFFER_WIDTH;
             PushBitmap(Group, ID, MinX, MinY, FrameIndex, MirrorX, Color, false, FrameOffsetX, VisibleWidthArg);
         }
-        else if(MaxX > Group->OutputBitmap->Width)
+        else if(MaxX > BACKBUFFER_WIDTH)
         {
-            MinX -= Group->OutputBitmap->Width;
+            MinX -= BACKBUFFER_WIDTH;
             PushBitmap(Group, ID, MinX, MinY, FrameIndex, MirrorX, Color, false, FrameOffsetX, VisibleWidthArg);
         }
     }
@@ -141,10 +141,9 @@ ColorUInt32ToV4(uint32 Color)
 }
 
 internal void
-InitializeRenderGroup(render_group *Group, memory_arena *Arena, game_bitmap *OutputBitmap, atlas *Atlas)
+InitializeRenderGroup(render_group *Group, memory_arena *Arena, atlas *Atlas)
 {
     Group->Arena = Arena;
-    Group->OutputBitmap = OutputBitmap;
 
     Group->Palette[Color_Black] = ColorUInt32ToV4(0x000000);
     Group->Palette[Color_Blue] = ColorUInt32ToV4(0x0000C0);

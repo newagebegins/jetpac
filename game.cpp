@@ -1200,7 +1200,7 @@ extern "C" GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
 
     memory_arena RenderArena = MakeArena(Memory->RenderList, Memory->RenderListSize);
     render_group RenderGroup;
-    InitializeRenderGroup(&RenderGroup, &RenderArena, Backbuffer, GameState->Atlas);
+    InitializeRenderGroup(&RenderGroup, &RenderArena, GameState->Atlas);
     PushClear(&RenderGroup, Color_Black);
 
     switch(GameState->MetaPhase)

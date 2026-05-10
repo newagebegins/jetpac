@@ -481,8 +481,8 @@ WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, char *CommandLine, int ShowC
 
     win32_backbuffer *Backbuffer = &GlobalBackbuffer;
 
-    Backbuffer->Width = 256;
-    Backbuffer->Height = 192;
+    Backbuffer->Width = BACKBUFFER_WIDTH;
+    Backbuffer->Height = BACKBUFFER_HEIGHT;
     Backbuffer->Pitch = Backbuffer->Width*BITMAP_BYTES_PER_PIXEL;
 
     Backbuffer->Info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -710,7 +710,7 @@ WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, char *CommandLine, int ShowC
 
         NewInput->dt = dt;
         Memory.RenderListUsed = 0;
-        Game.UpdateAndRender(&Memory, NewInput, (game_bitmap *)Backbuffer, Atlas);
+        Game.UpdateAndRender(&Memory, NewInput, Atlas);
         Win32OutputRenderList(Memory.RenderList, Memory.RenderListUsed, &AtlasBitmap, (game_bitmap *)Backbuffer);
 
         LARGE_INTEGER FrameEndCounter = Win32GetCounter();
