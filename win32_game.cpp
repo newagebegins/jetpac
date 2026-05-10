@@ -260,6 +260,175 @@ Win32AllocateAtlas()
     return(Atlas);
 }
 
+internal void
+DrawRect(game_bitmap *Bitmap, int32 MinX, int32 MinY, int32 MaxX, int32 MaxY,
+         v4 Color = {1.0f, 1.0f, 1.0f, 1.0f})
+{
+    if(MinX < 0)
+    {
+        MinX = 0;
+    }
+    if(MinY < 0)
+    {
+        MinY = 0;
+    }
+    if(MaxX > Bitmap->Width)
+    {
+        MaxX = Bitmap->Width;
+    }
+    if(MaxY > Bitmap->Height)
+    {
+        MaxY = Bitmap->Height;
+    }
+    
+    uint8 *DestRow = (uint8 *)Bitmap->Pixels + MinY*Bitmap->Pitch + MinX*BITMAP_BYTES_PER_PIXEL;
+
+    for(int32 Y = MinY;
+        Y < MaxY;
+        ++Y)
+    {
+        uint32 *Dest = (uint32*)DestRow;
+        for(int32 X = MinX;
+            X < MaxX;
+            ++X)
+        {
+            uint32 R = (uint32)(255.0f*Color.r + 0.5f);
+            uint32 G = (uint32)(255.0f*Color.g + 0.5f);
+            uint32 B = (uint32)(255.0f*Color.b + 0.5f);
+            uint32 Color32 = (R << 16) | (G << 8) | B;
+            *Dest = Color32;
+            Dest++;
+        }
+        DestRow += Bitmap->Pitch;
+    }
+}
+
+internal void
+DrawBitmap(game_bitmap *Output, game_bitmap *Bitmap, int32 MinX, int32 MinY,
+           v4 Color = {1.0f, 1.0f, 1.0f, 1.0f},
+           v2 UVOffset = {0.0f, 0.0f}, v2 UVScale = {1.0f, 1.0f})
+{
+    int32 MaxX = MinX + FloorReal32ToInt32(AbsoluteValue(UVScale.x)*(r32)Bitmap->Width);
+    int32 MaxY = MinY + FloorReal32ToInt32(UVScale.y*(r32)Bitmap->Height);
+
+    int32 ClipMinX = 0;
+    int32 ClipMaxX = Output->Width;
+    int32 ClipMinY = 0;
+    int32 ClipMaxY = Output->Height;
+
+    s32 SourceStartX = FloorReal32ToInt32(UVOffset.x*(r32)Bitmap->Width);
+    s32 SourceStartY = FloorReal32ToInt32(UVOffset.y*(r32)Bitmap->Height);
+    s32 SourceAdvanceX = (s32)SignOf(UVScale.x);
+    s32 SourceAdvanceY = (s32)SignOf(UVScale.y);
+
+    if(MinX < ClipMinX)
+    {
+        SourceStartX += SourceAdvanceX*(ClipMinX - MinX);
+        MinX = ClipMinX;
+    }
+    if(MinY < ClipMinY)
+    {
+        SourceStartY += SourceAdvanceY*(ClipMinY - MinY);
+        MinY = ClipMinY;
+    }
+    if(MaxX > ClipMaxX)
+    {
+        MaxX = ClipMaxX;
+    }
+    if(MaxY > ClipMaxY)
+    {
+        MaxY = ClipMaxY;
+    }
+
+    if(SourceStartX >= Bitmap->Width)
+    {
+        SourceStartX = Bitmap->Width - 1;
+    }
+    else if(SourceStartX < 0)
+    {
+        SourceStartX = 0;
+    }
+
+    Assert(SourceStartY >= 0);
+    Assert(SourceStartY < Bitmap->Height);
+
+    uint8 *DestRow = (uint8 *)Output->Pixels + MinY*Output->Pitch + MinX*BITMAP_BYTES_PER_PIXEL;
+    uint8 *SourceRow = (uint8 *)Bitmap->Pixels + SourceStartY*Bitmap->Pitch + SourceStartX*BITMAP_BYTES_PER_PIXEL;
+
+    for(int32 Y = MinY;
+        Y < MaxY;
+        ++Y)
+    {
+        uint32 *Source = (uint32 *)SourceRow;
+        uint32 *Dest = (uint32*)DestRow;
+        for(int32 X = MinX;
+            X < MaxX;
+            ++X)
+        {
+            uint32 Dest32 = *Dest;
+            uint32 Source32 = *Source;
+
+            real32 Inv255 = 1.0f / 255.0f;
+
+            real32 SB = (real32)(Source32 & 0xFF) * Inv255;
+            real32 SG = (real32)((Source32 >> 8) & 0xFF) * Inv255;
+            real32 SR = (real32)((Source32 >> 16) & 0xFF) * Inv255;
+            uint32 SA = (Source32 >> 24) & 0xFF;
+
+            SR *= Color.r;
+            SG *= Color.g;
+            SB *= Color.b;
+
+            if(SA)
+            {
+                *Dest = ((uint32)(SB*255.0f + 0.5f) |
+                         ((uint32)(SG*255.0f + 0.5f) << 8) |
+                         ((uint32)(SR*255.0f + 0.5f) << 16));
+            }
+
+            Dest++;
+            Source += SourceAdvanceX;
+        }
+        SourceRow += Bitmap->Pitch;
+        DestRow += Output->Pitch;
+    }
+}
+
+internal void
+Win32OutputRenderList(void *RenderList, u32 UsedSize, game_bitmap *AtlasBitmap, game_bitmap *OutputBitmap)
+{
+    render_entry_base *Base = (render_entry_base *)RenderList;
+    render_entry_base *End = (render_entry_base *)((uint8 *)RenderList + UsedSize);
+    while(Base < End)
+    {
+        switch(Base->ID)
+        {
+            case RenderEntry_Clear:
+            {
+                render_entry_clear *Entry = (render_entry_clear *)(Base + 1);
+                DrawRect(OutputBitmap, 0, 0, OutputBitmap->Width, OutputBitmap->Height, Entry->Color);
+                Base = (render_entry_base *)(Entry + 1);
+            } break;
+
+            case RenderEntry_Rect:
+            {
+                render_entry_rect *Entry = (render_entry_rect *)(Base + 1);
+                DrawRect(OutputBitmap, Entry->MinX, Entry->MinY, Entry->MaxX, Entry->MaxY, Entry->Color);
+                Base = (render_entry_base *)(Entry + 1);
+            } break;
+
+            case RenderEntry_Bitmap:
+            {
+                render_entry_bitmap *Entry = (render_entry_bitmap *)(Base + 1);
+                DrawBitmap(OutputBitmap, AtlasBitmap, Entry->MinX, Entry->MinY, Entry->Color, Entry->UVOffset, Entry->UVScale);
+                Base = (render_entry_base *)(Entry + 1);
+            } break;
+
+            InvalidDefaultCase;
+        }
+    }
+}
+
 int APIENTRY
 WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, char *CommandLine, int ShowCmd)
 {
@@ -375,14 +544,15 @@ WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, char *CommandLine, int ShowC
     game_memory Memory = {};
 
     Memory.PermanentStorageSize = Megabytes(8);
-    Memory.TransientStorageSize = Megabytes(16);
-    memory_index TotalMemorySize = Memory.PermanentStorageSize + Memory.TransientStorageSize;
+    Memory.RenderListSize = Megabytes(4);
+    memory_index TotalMemorySize = Memory.PermanentStorageSize + Memory.RenderListSize;
 
     Memory.PermanentStorage = VirtualAlloc(BaseAddress, TotalMemorySize, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
     Assert(Memory.PermanentStorage);
-    Memory.TransientStorage = (uint8 *)Memory.PermanentStorage + Memory.PermanentStorageSize;
+    Memory.RenderList = (uint8 *)Memory.PermanentStorage + Memory.PermanentStorageSize;
 
     atlas *Atlas = Win32AllocateAtlas();
+    game_bitmap AtlasBitmap = MakeAtlasBitmap(Atlas);
 
     game_input Inputs[2] = {};
     game_input *OldInput = &Inputs[0];
@@ -539,7 +709,9 @@ WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, char *CommandLine, int ShowC
         }
 
         NewInput->dt = dt;
+        Memory.RenderListUsed = 0;
         Game.UpdateAndRender(&Memory, NewInput, (game_bitmap *)Backbuffer, Atlas);
+        Win32OutputRenderList(Memory.RenderList, Memory.RenderListUsed, &AtlasBitmap, (game_bitmap *)Backbuffer);
 
         LARGE_INTEGER FrameEndCounter = Win32GetCounter();
         int64 CountsElapsed = FrameEndCounter.QuadPart - FrameStartCounter.QuadPart;

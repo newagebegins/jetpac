@@ -2,8 +2,6 @@
 #define GAME_H
 
 #include "platform.h"
-#include "intrinsics.h"
-#include "my_math.h"
 #include "random.h"
 
 struct memory_arena

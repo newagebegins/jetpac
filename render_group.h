@@ -22,47 +22,13 @@ enum color
     Color_Count,
 };
 
-enum render_entry_id
-{
-    RenderEntry_Clear,
-    RenderEntry_Bitmap,
-    RenderEntry_Rect,
-};
-
-struct render_entry_base
-{
-    render_entry_id ID;
-};
-
-struct render_entry_clear
-{
-    color Color;
-};
-
-struct render_entry_rect
-{
-    int32 MinX, MinY;
-    int32 MaxX, MaxY;
-    color Color;
-    bool32 WrapX;
-};
-
-struct render_entry_bitmap
-{
-    s32 DimX, DimY;
-    s32 MinX, MinY;
-    v4 Color;
-    v2 UVOffset;
-    v2 UVScale;
-};
-
 struct render_group
 {
-    memory_arena Arena;
+    memory_arena *Arena;
     game_bitmap *OutputBitmap;
     v4 Palette[Color_Count];
     atlas *Atlas;
-    game_bitmap *AtlasBitmap;
+    game_bitmap AtlasBitmap;
 };
 
 #endif

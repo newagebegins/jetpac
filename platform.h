@@ -75,15 +75,19 @@ ZeroSize(void *Memory, memory_index Size)
 
 #define ZeroStruct(S) ZeroSize(&(S), sizeof(S))
 
+#include "intrinsics.h"
+#include "my_math.h"
+#include "render_list.h"
 #include "atlas.h"
 
 struct game_memory
 {
     void *PermanentStorage;
-    uint32 PermanentStorageSize;
+    u32 PermanentStorageSize;
 
-    void *TransientStorage;
-    uint32 TransientStorageSize;
+    void *RenderList;
+    u32 RenderListSize;
+    u32 RenderListUsed;
 };
 
 struct game_button
@@ -119,6 +123,17 @@ struct game_bitmap
     int32 Pitch;
     void *Pixels;
 };
+
+inline game_bitmap
+MakeAtlasBitmap(atlas *Atlas)
+{
+    game_bitmap AtlasBitmap = {};
+    AtlasBitmap.Width = ATLAS_WIDTH;
+    AtlasBitmap.Height = ATLAS_HEIGHT;
+    AtlasBitmap.Pitch = ATLAS_PITCH;
+    AtlasBitmap.Pixels = Atlas->Pixels;
+    return(AtlasBitmap);
+}
 
 #define GAME_UPDATE_AND_RENDER(name) void name(game_memory *Memory, game_input *Input, game_bitmap *Backbuffer, atlas *Atlas)
 typedef GAME_UPDATE_AND_RENDER(game_update_and_render);

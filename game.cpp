@@ -1198,24 +1198,16 @@ extern "C" GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
         GameState->IsInitialized = true;
     }
 
-    transient_state *TranState = (transient_state *)Memory->TransientStorage;
-    Assert(sizeof(transient_state) <= Memory->TransientStorageSize);
-    if(!TranState->IsInitialized)
-    {
-        TranState->TranArena = MakeArena((TranState + 1), Memory->TransientStorageSize - sizeof(transient_state));
-
-        TranState->IsInitialized = true;
-    }
-
-    temp_memory TempRenderMemory = BeginTemporaryMemory(&TranState->TranArena);
-    render_group *RenderGroup = AllocateRenderGroup(&TranState->TranArena, Megabytes(8), Backbuffer, GameState->Atlas);
-    PushClear(RenderGroup, Color_Black);
+    memory_arena RenderArena = MakeArena(Memory->RenderList, Memory->RenderListSize);
+    render_group RenderGroup;
+    InitializeRenderGroup(&RenderGroup, &RenderArena, Backbuffer, GameState->Atlas);
+    PushClear(&RenderGroup, Color_Black);
 
     switch(GameState->MetaPhase)
     {
         case MetaPhase_Play:
         {
-            if(UpdateAndRenderWorld(GameState, Input, RenderGroup))
+            if(UpdateAndRenderWorld(GameState, Input, &RenderGroup))
             {
                 GameState->MetaPhase = MetaPhase_GameOver;
                 ClearArena(&GameState->WorldArena);
@@ -1224,7 +1216,7 @@ extern "C" GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
 
         case MetaPhase_GameOver:
         {
-            PushString(RenderGroup, "GAME OVER", 11*TILE_SIZE, 9*TILE_SIZE, Color_White);
+            PushString(&RenderGroup, "GAME OVER", 11*TILE_SIZE, 9*TILE_SIZE, Color_White);
 
             if(Input->Action.JustWentDown)
             {
@@ -1237,14 +1229,11 @@ extern "C" GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
         InvalidDefaultCase;
     }
 
-    PushString(RenderGroup, "1UP", 3*TILE_SIZE, (TILE_COUNT_Y+1)*TILE_SIZE, Color_White);
+    PushString(&RenderGroup, "1UP", 3*TILE_SIZE, (TILE_COUNT_Y+1)*TILE_SIZE, Color_White);
 
     char ScoreBuffer[8];
     UInt32ToString(GameState->Score, ScoreBuffer, 6);
-    PushString(RenderGroup, ScoreBuffer, 1*TILE_SIZE, (TILE_COUNT_Y+0)*TILE_SIZE, Color_BrightYellow);
+    PushString(&RenderGroup, ScoreBuffer, 1*TILE_SIZE, (TILE_COUNT_Y+0)*TILE_SIZE, Color_BrightYellow);
 
-    RenderGroupToOutput(RenderGroup);
-
-    EndTemporaryMemory(TempRenderMemory);
-    CheckArena(&TranState->TranArena);
+    Memory->RenderListUsed = (u32)RenderArena.Used;
 }
