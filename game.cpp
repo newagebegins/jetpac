@@ -292,7 +292,7 @@ AllocateWorld(memory_arena *Arena)
 }
 
 internal bool32
-UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *RenderGroup, memory_arena *TranArena)
+UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *RenderGroup)
 {
     bool32 GameOver = false;
     world *World = GameState->World;
@@ -1103,7 +1103,7 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
 
     if(World->Lives)
     {
-        char *LivesBuffer = PushArray(TranArena, 8, char);
+        char LivesBuffer[8];
         UInt32ToString(World->Lives, LivesBuffer, 1);
         PushString(RenderGroup, LivesBuffer, 8*TILE_SIZE, (TILE_COUNT_Y+1)*TILE_SIZE, Color_White);
         PushBitmap(RenderGroup, Bitmap_Lives, 9*TILE_SIZE, (TILE_COUNT_Y+1)*TILE_SIZE);
@@ -1215,7 +1215,7 @@ extern "C" GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
     {
         case MetaPhase_Play:
         {
-            if(UpdateAndRenderWorld(GameState, Input, RenderGroup, &TranState->TranArena))
+            if(UpdateAndRenderWorld(GameState, Input, RenderGroup))
             {
                 GameState->MetaPhase = MetaPhase_GameOver;
                 ClearArena(&GameState->WorldArena);
@@ -1239,7 +1239,7 @@ extern "C" GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
 
     PushString(RenderGroup, "1UP", 3*TILE_SIZE, (TILE_COUNT_Y+1)*TILE_SIZE, Color_White);
 
-    char *ScoreBuffer = PushArray(&TranState->TranArena, 8, char);
+    char ScoreBuffer[8];
     UInt32ToString(GameState->Score, ScoreBuffer, 6);
     PushString(RenderGroup, ScoreBuffer, 1*TILE_SIZE, (TILE_COUNT_Y+0)*TILE_SIZE, Color_BrightYellow);
 

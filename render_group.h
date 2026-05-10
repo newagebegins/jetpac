@@ -25,9 +25,8 @@ enum color
 enum render_entry_id
 {
     RenderEntry_Clear,
-    RenderEntry_Rect,
     RenderEntry_Bitmap,
-    RenderEntry_String,
+    RenderEntry_Rect,
 };
 
 struct render_entry_base
