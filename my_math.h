@@ -562,4 +562,12 @@ RectsOverlapWrapX(rectangle2i A, rectangle2i B, int32 WrapX)
     return(Result);
 }
 
+inline s32
+GetWidth(rectangle2i A)
+{
+    s32 Result = A.MaxX - A.MinX;
+    Assert(Result >= 0);
+    return(Result);
+}
+
 #endif

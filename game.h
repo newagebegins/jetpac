@@ -62,9 +62,21 @@ PushSize(memory_arena *Arena, memory_index Size)
 #define PushStruct(Arena, type) (type *)PushSize(Arena, sizeof(type))
 #define PushArray(Arena, Count, type) (type *)PushSize(Arena, (Count)*sizeof(type))
 
-inline memory_arena
-SubArena(memory_arena *Parent, memory_index Size)
+inline memory_index
+GetRemainingSize(memory_arena *Arena)
 {
+    Assert(Arena->Size >= Arena->Used);
+    memory_index Result = Arena->Size - Arena->Used;
+    return(Result);
+}
+
+inline memory_arena
+SubArena(memory_arena *Parent, memory_index Size = 0)
+{
+    if(Size == 0)
+    {
+        Size = GetRemainingSize(Parent);
+    }
     memory_arena Arena = MakeArena(PushSize(Parent, Size), Size);
     return(Arena);
 }
@@ -85,6 +97,55 @@ ZeroMemory(void *Memory, memory_index Size)
         *Dest++ = 0;
     }
 }
+
+enum bitmap_id
+{
+    Bitmap_None,
+    Bitmap_JetmanWalking,
+    Bitmap_JetmanFlying,
+    Bitmap_Font,
+    Bitmap_Laser,
+    Bitmap_Part,
+    Bitmap_Fuel,
+    Bitmap_Flame,
+    Bitmap_Asteroid,
+    Bitmap_Face,
+    Bitmap_Ground,
+    Bitmap_Explosion,
+    Bitmap_Lives,
+};
+
+struct bitmap_info
+{
+    s32 FrameCount;
+    s32 FrameWidth;
+    s32 FrameHeight;
+    r32 InvFullWidth;
+    r32 InvFullHeight;
+    s32 OffsetY;
+};
+
+struct atlas
+{    
+    game_bitmap GroundBitmaps[3];
+    game_bitmap JetmanWalkingBitmaps[3];
+    game_bitmap JetmanFlyingBitmaps[3];
+    game_bitmap ExplosionBitmaps[5];
+    game_bitmap PartBitmaps[6];
+    game_bitmap AsteroidBitmaps[3];
+    game_bitmap LaserBitmap;
+    game_bitmap FuelBitmap;
+    game_bitmap FlameBitmaps[3];
+    game_bitmap FontBitmap;
+    game_bitmap LivesBitmap;
+    game_bitmap FaceBitmaps[3];
+
+    memory_arena Arena;
+    u32 *AtlasMemory;
+};
+
+internal game_bitmap *GetBitmap(atlas *Atlas, bitmap_id ID, u32 FrameIndex);
+inline bitmap_info GetBitmapInfo(atlas *Atlas, bitmap_id ID);
 
 #include "render_group.h"
 
@@ -224,6 +285,8 @@ struct game_state
 {
     bool32 IsInitialized;
 
+    memory_arena MainArena;
+
     meta_phase MetaPhase;
     uint32 Score;
     world *World;
@@ -232,18 +295,7 @@ struct game_state
     uint8 Tiles[TILE_COUNT_Y+1][TILE_COUNT_X];
     uint8 TileColors[TILE_COUNT_Y+1][TILE_COUNT_X];
 
-    game_bitmap GroundBitmaps[3];
-    game_bitmap JetmanWalkingBitmaps[3];
-    game_bitmap JetmanFlyingBitmaps[3];
-    game_bitmap ExplosionBitmaps[5];
-    game_bitmap PartBitmaps[6];
-    game_bitmap AsteroidBitmaps[3];
-    game_bitmap LaserBitmap;
-    game_bitmap FuelBitmap;
-    game_bitmap FlameBitmaps[3];
-    game_bitmap FontBitmap;
-    game_bitmap LivesBitmap;
-    game_bitmap FaceBitmaps[3];
+    atlas *Atlas;
 };
 
 struct transient_state

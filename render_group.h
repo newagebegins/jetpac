@@ -63,6 +63,7 @@ struct render_group
     game_bitmap *OutputBitmap;
     v4 Palette[Color_Count];
     game_bitmap *FontBitmap;
+    atlas *Atlas;
 };
 
 #endif

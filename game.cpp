@@ -48,6 +48,270 @@ DEBUGLoadBitmap(char *FilePath)
     return(Result);
 }
 
+inline bitmap_info
+GetBitmapInfo(atlas *Atlas, bitmap_id ID)
+{
+    bitmap_info Info = {};
+    game_bitmap *Bitmap = 0;
+
+    switch(ID)
+    {
+        case Bitmap_JetmanWalking:
+        {
+            Info.FrameCount = ArrayCount(Atlas->JetmanWalkingBitmaps);
+            Bitmap = Atlas->JetmanWalkingBitmaps;
+        } break;
+
+        case Bitmap_JetmanFlying:
+        {
+            Info.FrameCount = ArrayCount(Atlas->JetmanFlyingBitmaps);
+            Bitmap = Atlas->JetmanFlyingBitmaps;
+        } break;
+
+        case Bitmap_Font:
+        {
+            Bitmap = &Atlas->FontBitmap;
+            Info.FrameWidth = TILE_SIZE;
+            Info.FrameCount = Bitmap->Width / Info.FrameWidth;
+        } break;
+
+        case Bitmap_Laser:
+        {
+            Info.FrameCount = 1;
+            Bitmap = &Atlas->LaserBitmap;
+        } break;
+
+        case Bitmap_Part:
+        {
+            Info.FrameCount = ArrayCount(Atlas->PartBitmaps);
+            Bitmap = Atlas->PartBitmaps;
+        } break;
+
+        case Bitmap_Fuel:
+        {
+            Info.FrameCount = 1;
+            Bitmap = &Atlas->FuelBitmap;
+        } break;
+
+        case Bitmap_Flame:
+        {
+            Info.FrameCount = ArrayCount(Atlas->FlameBitmaps);
+            Bitmap = Atlas->FlameBitmaps;
+        } break;
+
+        case Bitmap_Asteroid:
+        {
+            Info.FrameCount = ArrayCount(Atlas->AsteroidBitmaps);
+            Bitmap = Atlas->AsteroidBitmaps;
+        } break;
+
+        case Bitmap_Face:
+        {
+            Info.FrameCount = ArrayCount(Atlas->FaceBitmaps);
+            Bitmap = Atlas->FaceBitmaps;
+        } break;
+
+        case Bitmap_Ground:
+        {
+            Info.FrameCount = ArrayCount(Atlas->GroundBitmaps);
+            Bitmap = Atlas->GroundBitmaps;
+        } break;
+
+        case Bitmap_Explosion:
+        {
+            Info.FrameCount = ArrayCount(Atlas->ExplosionBitmaps);
+            Bitmap = Atlas->ExplosionBitmaps;
+        } break;
+
+        case Bitmap_Lives:
+        {
+            Info.FrameCount = 1;
+            Bitmap = &Atlas->LivesBitmap;
+        } break;
+
+        InvalidDefaultCase;
+    }
+
+    if(Info.FrameWidth == 0)
+    {
+        Info.FrameWidth = Bitmap->Width;
+    }
+    Info.FrameHeight = Bitmap->Height;
+    Info.InvFullWidth = 1.0f / (r32)Bitmap->Width;
+    Info.InvFullHeight = 1.0f / (r32)Bitmap->Height;
+    Info.OffsetY = 0;
+
+    return(Info);
+}
+
+internal game_bitmap *
+GetBitmap(atlas *Atlas, bitmap_id ID, u32 FrameIndex)
+{
+    game_bitmap *Bitmap = 0;
+
+    switch(ID)
+    {
+        case Bitmap_JetmanWalking:
+        {
+            Assert(FrameIndex < ArrayCount(Atlas->JetmanWalkingBitmaps));
+            Bitmap = Atlas->JetmanWalkingBitmaps + FrameIndex;
+        } break;
+
+        case Bitmap_JetmanFlying:
+        {
+            Assert(FrameIndex < ArrayCount(Atlas->JetmanFlyingBitmaps));
+            Bitmap = Atlas->JetmanFlyingBitmaps + FrameIndex;
+        } break;
+
+        case Bitmap_Font:
+        {
+            Bitmap = &Atlas->FontBitmap;
+        } break;
+
+        case Bitmap_Laser:
+        {
+            Assert(FrameIndex == 0);
+            Bitmap = &Atlas->LaserBitmap;
+        } break;
+
+        case Bitmap_Part:
+        {
+            Assert(FrameIndex < ArrayCount(Atlas->PartBitmaps));
+            Bitmap = Atlas->PartBitmaps + FrameIndex;
+        } break;
+
+        case Bitmap_Fuel:
+        {
+            Assert(FrameIndex == 0);
+            Bitmap = &Atlas->FuelBitmap;
+        } break;
+
+        case Bitmap_Flame:
+        {
+            Assert(FrameIndex < ArrayCount(Atlas->FlameBitmaps));
+            Bitmap = Atlas->FlameBitmaps + FrameIndex;
+        } break;
+
+        case Bitmap_Asteroid:
+        {
+            Assert(FrameIndex < ArrayCount(Atlas->AsteroidBitmaps));
+            Bitmap = Atlas->AsteroidBitmaps + FrameIndex;
+        } break;
+
+        case Bitmap_Face:
+        {
+            Assert(FrameIndex < ArrayCount(Atlas->FaceBitmaps));
+            Bitmap = Atlas->FaceBitmaps + FrameIndex;
+        } break;
+
+        case Bitmap_Ground:
+        {
+            Assert(FrameIndex < ArrayCount(Atlas->GroundBitmaps));
+            Bitmap = Atlas->GroundBitmaps + FrameIndex;
+        } break;
+
+        case Bitmap_Explosion:
+        {
+            Assert(FrameIndex < ArrayCount(Atlas->ExplosionBitmaps));
+            Bitmap = Atlas->ExplosionBitmaps + FrameIndex;
+        } break;
+
+        case Bitmap_Lives:
+        {
+            Assert(FrameIndex == 0);
+            Bitmap = &Atlas->LivesBitmap;
+        } break;
+
+        InvalidDefaultCase;
+    }
+
+    return(Bitmap);
+}
+
+internal atlas *
+AllocateAtlas(memory_arena *Arena)
+{
+    atlas *Atlas = PushStruct(Arena, atlas);
+
+    Atlas->GroundBitmaps[0] = DEBUGLoadBitmap("ground0.bmp");
+    Atlas->GroundBitmaps[1] = DEBUGLoadBitmap("ground1.bmp");
+    Atlas->GroundBitmaps[2] = DEBUGLoadBitmap("ground2.bmp");
+
+    Atlas->JetmanWalkingBitmaps[0] = DEBUGLoadBitmap("jetman0.bmp");
+    Atlas->JetmanWalkingBitmaps[1] = DEBUGLoadBitmap("jetman1.bmp");
+    Atlas->JetmanWalkingBitmaps[2] = DEBUGLoadBitmap("jetman2.bmp");
+
+    Atlas->JetmanFlyingBitmaps[0] = DEBUGLoadBitmap("jetman3.bmp");
+    Atlas->JetmanFlyingBitmaps[1] = DEBUGLoadBitmap("jetman4.bmp");
+    Atlas->JetmanFlyingBitmaps[2] = DEBUGLoadBitmap("jetman5.bmp");
+
+    Atlas->ExplosionBitmaps[0] = DEBUGLoadBitmap("explosion0.bmp");
+    Atlas->ExplosionBitmaps[1] = DEBUGLoadBitmap("explosion1.bmp");
+    Atlas->ExplosionBitmaps[2] = DEBUGLoadBitmap("explosion2.bmp");
+    Atlas->ExplosionBitmaps[3] = DEBUGLoadBitmap("explosion3.bmp");
+    Atlas->ExplosionBitmaps[4] = DEBUGLoadBitmap("explosion4.bmp");
+
+    Atlas->PartBitmaps[0] = DEBUGLoadBitmap("part0.bmp");
+    Atlas->PartBitmaps[1] = DEBUGLoadBitmap("part1.bmp");
+    Atlas->PartBitmaps[2] = DEBUGLoadBitmap("part2.bmp");
+    Atlas->PartBitmaps[3] = DEBUGLoadBitmap("part3.bmp");
+    Atlas->PartBitmaps[4] = DEBUGLoadBitmap("part4.bmp");
+    Atlas->PartBitmaps[5] = DEBUGLoadBitmap("part5.bmp");
+
+    Atlas->FuelBitmap = DEBUGLoadBitmap("fuel.bmp");
+
+    Atlas->FlameBitmaps[0] = DEBUGLoadBitmap("rocket_flame0.bmp");
+    Atlas->FlameBitmaps[1] = DEBUGLoadBitmap("rocket_flame1.bmp");
+    Atlas->FlameBitmaps[2] = DEBUGLoadBitmap("rocket_flame2.bmp");
+
+    Atlas->AsteroidBitmaps[0] = DEBUGLoadBitmap("asteroid0.bmp");
+    Atlas->AsteroidBitmaps[1] = DEBUGLoadBitmap("asteroid1.bmp");
+    Atlas->AsteroidBitmaps[2] = DEBUGLoadBitmap("asteroid2.bmp");
+
+    Atlas->LaserBitmap = DEBUGLoadBitmap("laser.bmp");
+    Atlas->FontBitmap = DEBUGLoadBitmap("font.bmp");
+    Atlas->LivesBitmap = DEBUGLoadBitmap("lives.bmp");
+
+    Atlas->FaceBitmaps[0] = DEBUGLoadBitmap("face0.bmp");
+    Atlas->FaceBitmaps[1] = DEBUGLoadBitmap("face1.bmp");
+    Atlas->FaceBitmaps[2] = DEBUGLoadBitmap("face2.bmp");
+
+    u32 AtlasDim = 512;
+    u32 AtlasPitch = AtlasDim*BITMAP_BYTES_PER_PIXEL;
+    u32 AtlasSize = AtlasDim*AtlasPitch;
+    Atlas->AtlasMemory = (u32 *)PushSize(Arena, AtlasSize);
+
+    for(u32 BitmapIndex = 0;
+        BitmapIndex < ArrayCount(Atlas->ExplosionBitmaps);
+        ++BitmapIndex)
+    {
+        game_bitmap *Bitmap = Atlas->ExplosionBitmaps + 0;
+
+        u8 *DestRow = (u8 *)Atlas->AtlasMemory + BitmapIndex*Bitmap->Width*BITMAP_BYTES_PER_PIXEL;
+        u8 *SourceRow = (u8 *)Bitmap->Pixels;
+
+        for(s32 Y = 0;
+            Y < Bitmap->Height;
+            ++Y)
+        {
+            u32 *Dest = (u32 *)DestRow;
+            u32 *Source = (u32 *)SourceRow;
+
+            for(s32 X = 0;
+                X < Bitmap->Width;
+                ++X)
+            {
+                *Dest++ = *Source++;
+            }
+
+            DestRow += AtlasPitch;
+            SourceRow += Bitmap->Pitch;
+        }
+    }
+
+    return(Atlas);
+}
+
 internal void
 AddExplosionAt(world *World, v2 P)
 {
@@ -412,7 +676,8 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
             if(Player->FrameTimer >= FrameDuration)
             {
                 Player->FrameTimer -= FrameDuration;
-                Player->FrameIndex = (Player->FrameIndex + 1) % ArrayCount(GameState->JetmanFlyingBitmaps);
+                bitmap_info Info = GetBitmapInfo(GameState->Atlas, Bitmap_JetmanFlying);
+                Player->FrameIndex = (Player->FrameIndex + 1) % Info.FrameCount;
             }
         }
         else
@@ -526,16 +791,19 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
         PushRect(RenderGroup, Player->P, Player->P + Player->Dim, ColorUintToV3(COLOR_GREEN));
 #endif
         bool32 Flip = Player->DirX < 0;
-        game_bitmap *Bitmap;
+        bitmap_id ID;
+        u32 FrameIndex;
         if(Player->IsFlying)
         {
-            Bitmap = GameState->JetmanFlyingBitmaps + Player->FrameIndex;
+            ID = Bitmap_JetmanFlying;
+            FrameIndex = Player->FrameIndex;
         }
         else
         {
-            Bitmap = GameState->JetmanWalkingBitmaps + WalkingFrames[Player->FrameIndex];
+            ID = Bitmap_JetmanWalking;
+            FrameIndex = WalkingFrames[Player->FrameIndex];
         }
-        PushBitmap(RenderGroup, Bitmap, (int32)Player->P.x, (int32)Player->P.y, Flip);
+        PushBitmap(RenderGroup, ID, (int32)Player->P.x, (int32)Player->P.y, FrameIndex, Flip);
     }
 
     //
@@ -549,16 +817,18 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
         laser *Laser = World->Lasers + LaserIndex;
         if(Laser->IsActive)
         {
-            real32 MaxLaserLength = 17*TILE_SIZE;
-            real32 MaxLaserDistance = MaxLaserLength + 5*TILE_SIZE;
+            s32 MaxLaserLength = 17*TILE_SIZE;
+            r32 MaxLaserDistance = (r32)(MaxLaserLength + 5*TILE_SIZE);
             // NOTE(slava): 1 tile per frame
             real32 LaserSpeed = TILE_SIZE*60.0f;
+            //LaserSpeed /= 10;
 
             real32 StepLength = LaserSpeed*Input->dt;
             real32 dX = Laser->DirX*StepLength;
 
-            r32 UOffset;
-            r32 UScale;
+            s32 OffsetX;
+            rectangle2i LaserRect;
+            s32 LaserLength;
 
             if(Laser->DistanceTraveled < MaxLaserDistance)
             {
@@ -584,18 +854,16 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
                     Laser->TailX += dX;
                 }
 
+                LaserRect = GetLaserRect(Laser);
+                LaserLength = Minimum(GetWidth(LaserRect), MaxLaserLength);
+
                 if(Laser->DirX > 0)
                 {
-                    int32 MaxX = (int32)Laser->HeadX + 1;
-                    r32 LaserWidth = Laser->HeadX - Laser->TailX;
-                    UScale = LaserWidth / (r32)GameState->LaserBitmap.Width;
-                    UOffset = 1.0f - UScale;
+                    OffsetX = MaxLaserLength - LaserLength;
                 }
                 else
                 {
-                    r32 LaserWidth = Laser->TailX - Laser->HeadX;
-                    UScale = LaserWidth / (r32)GameState->LaserBitmap.Width;
-                    UOffset = 0.0f;
+                    OffsetX = 0;
                 }
             }
             else
@@ -608,27 +876,21 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
                     Laser->IsActive = false;
                 }
 
+                LaserRect = GetLaserRect(Laser);
+                LaserLength = Minimum(GetWidth(LaserRect), MaxLaserLength);
+
                 if(Laser->DirX > 0)
                 {
-                    r32 LaserWidth = Laser->HeadX - Laser->TailX;
-                    UScale = LaserWidth / (r32)GameState->LaserBitmap.Width;
-                    UOffset = 0.0f;
+                    OffsetX = 0;
                 }
                 else
                 {
-                    int32 MaxX = (int32)Laser->TailX + 1;
-                    r32 LaserWidth = Laser->TailX - Laser->HeadX;
-                    UScale = LaserWidth / (r32)GameState->LaserBitmap.Width;
-                    UOffset = 1.0f - UScale;
+                    OffsetX = MaxLaserLength - LaserLength;
                 }
             }
 
-            v2 UVOffset = {UOffset, 0.0f};
-            v2 UVScale = {UScale, 1.0f};
-
-            rectangle2i LaserRect = GetLaserRect(Laser);
-            PushBitmap(RenderGroup, &GameState->LaserBitmap, LaserRect.MinX, Laser->Y,
-                       Laser->DirX < 0, Laser->Color, true, UVOffset, UVScale);
+            PushBitmap(RenderGroup, Bitmap_Laser, LaserRect.MinX, Laser->Y, 0,
+                       Laser->DirX < 0, Laser->Color, true, OffsetX, LaserLength);
         }
     }
 
@@ -882,6 +1144,8 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
     // NOTE(slava): Draw rocket and fuel
     //
 
+    bitmap_info PartInfo = GetBitmapInfo(GameState->Atlas, Bitmap_Part);
+
     if(World->InstalledPartsCount < 3)
     {
         for(int32 PartIndex = 0;
@@ -889,11 +1153,10 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
             ++PartIndex)
         {
             part *Part = World->Parts + PartIndex;
-            game_bitmap *Bitmap = GameState->PartBitmaps + 2*PartIndex;
             int32 MinX = (int32)Part->P.x;
             int32 MinY = (int32)Part->P.y;
-            PushBitmap(RenderGroup, Bitmap, MinX, MinY);
-            PushBitmap(RenderGroup, Bitmap + 1, MinX, MinY + PART_DIM_Y/2);
+            PushBitmap(RenderGroup, Bitmap_Part, MinX, MinY, 2*PartIndex);
+            PushBitmap(RenderGroup, Bitmap_Part, MinX, MinY + PART_DIM_Y/2, 2*PartIndex + 1);
         }
     }
     else if(World->InstalledPartsCount < ArrayCount(World->Parts))
@@ -901,25 +1164,27 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
         int32 InstalledFuelCount = World->InstalledPartsCount - 3;
 
         for(int32 BitmapIndex = 0;
-            BitmapIndex < ArrayCount(GameState->PartBitmaps);
+            BitmapIndex < PartInfo.FrameCount;
             ++BitmapIndex)
         {
             color Color = BitmapIndex < InstalledFuelCount ? Color_Magenta : Color_White;
-            PushBitmap(RenderGroup, GameState->PartBitmaps + BitmapIndex, ROCKET_X, (int32)World->RocketY + BitmapIndex*TILE_SIZE, false, Color);
+            PushBitmap(RenderGroup, Bitmap_Part, ROCKET_X, (int32)World->RocketY + BitmapIndex*TILE_SIZE, BitmapIndex, false, Color);
         }
 
         part *Fuel = World->Parts + World->InstalledPartsCount;
         int32 MinX = (int32)Fuel->P.x;
         int32 MinY = (int32)Fuel->P.y;
-        PushBitmap(RenderGroup, &GameState->FuelBitmap, MinX, MinY, false, Color_Magenta);
+        PushBitmap(RenderGroup, Bitmap_Fuel, MinX, MinY, 0, false, Color_Magenta);
     }
     else
     {
         for(int32 BitmapIndex = 0;
-            BitmapIndex < ArrayCount(GameState->PartBitmaps);
+            BitmapIndex < PartInfo.FrameCount;
             ++BitmapIndex)
         {
-            PushBitmap(RenderGroup, GameState->PartBitmaps + BitmapIndex, ROCKET_X, (int32)World->RocketY + BitmapIndex*TILE_SIZE, false, World->RocketBlinkColor);
+            PushBitmap(RenderGroup, Bitmap_Part,
+                       ROCKET_X, (int32)World->RocketY + BitmapIndex*TILE_SIZE,
+                       BitmapIndex, false, World->RocketBlinkColor);
         }
 
         if(World->SimState == SimState_TakeOff || World->SimState == SimState_Landing)
@@ -929,9 +1194,12 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
             if(World->FlameFrameTimer >= FlameFrameDuration)
             {
                 World->FlameFrameTimer -= FlameFrameDuration;
-                World->FlameFrameIndex = (World->FlameFrameIndex + 1) % ArrayCount(GameState->FlameBitmaps);
+                bitmap_info Info = GetBitmapInfo(GameState->Atlas, Bitmap_Flame);
+                World->FlameFrameIndex = (World->FlameFrameIndex + 1) % Info.FrameCount;
             }
-            PushBitmap(RenderGroup, GameState->FlameBitmaps + World->FlameFrameIndex, ROCKET_X, (int32)World->RocketY - 2*TILE_SIZE, false, Color_BrightRed);
+            PushBitmap(RenderGroup, Bitmap_Flame,
+                       ROCKET_X, (int32)World->RocketY - 2*TILE_SIZE,
+                       World->FlameFrameIndex, false, Color_BrightRed);
         }
     }
 
@@ -1059,24 +1327,24 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
                     AddExplosionAt(World, Enemy->P);
                 }
 
-                game_bitmap *Bitmaps = 0;
-                int32 BitmapCount = 0;
+                bitmap_id BitmapID = Bitmap_None;
                 switch(World->EnemyType)
                 {
                     case EnemyType_Asteroid:
                     {
-                        Bitmaps = GameState->AsteroidBitmaps;
-                        BitmapCount = ArrayCount(GameState->AsteroidBitmaps);
+                        BitmapID = Bitmap_Asteroid;
                     } break;
 
                     case EnemyType_Face:
                     {
-                        Bitmaps = GameState->FaceBitmaps;
-                        BitmapCount = ArrayCount(GameState->FaceBitmaps);
+                        BitmapID = Bitmap_Face;
                     } break;
 
                     InvalidDefaultCase;
                 }
+
+                bitmap_info BitmapInfo = GetBitmapInfo(GameState->Atlas, BitmapID);
+                int32 BitmapCount = BitmapInfo.FrameCount;
 
                 Enemy->FrameTimer += Input->dt;
                 real32 FrameDuration = 0.05f;
@@ -1085,11 +1353,11 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
                     Enemy->FrameTimer -= FrameDuration;
                     Enemy->FrameIndex = (Enemy->FrameIndex + 1) % BitmapCount;
                 }
-                game_bitmap *Bitmap = Bitmaps + Enemy->FrameIndex;
 
                 int32 MinX = (int32)Enemy->P.x;
                 int32 MinY = (int32)Enemy->P.y - 3;
-                PushBitmap(RenderGroup, Bitmap, MinX, MinY, Enemy->V.x < 0.0f, Enemy->Color, Enemy->EnteredPlayfield);
+                PushBitmap(RenderGroup, BitmapID, MinX, MinY, Enemy->FrameIndex,
+                           Enemy->V.x < 0.0f, Enemy->Color, Enemy->EnteredPlayfield);
             }
         }
     }
@@ -1106,10 +1374,13 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
             if(TileValue)
             {
                 color Color = (color)GameState->TileColors[TileY][TileX];
-                PushBitmap(RenderGroup, GameState->GroundBitmaps + TileValue - 1, TileX*TILE_SIZE, TileY*TILE_SIZE, false, Color);
+                PushBitmap(RenderGroup, Bitmap_Ground, TileX*TILE_SIZE, TileY*TILE_SIZE,
+                           TileValue - 1, false, Color);
             }
         }
     }
+
+    bitmap_info ExplosionInfo = GetBitmapInfo(GameState->Atlas, Bitmap_Explosion);
 
     for(int32 ExplosionIndex = 0;
         ExplosionIndex < ArrayCount(World->Explosions);
@@ -1123,7 +1394,7 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
             if(Explosion->FrameTimer >= FrameDuration)
             {
                 Explosion->FrameTimer -= FrameDuration;
-                if(Explosion->FrameIndex == ArrayCount(GameState->ExplosionBitmaps) - 1)
+                if(Explosion->FrameIndex == ExplosionInfo.FrameCount - 1)
                 {
                     Explosion->IsActive = false;
                 }
@@ -1135,7 +1406,8 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
 
             int32 MinX = (int32)Explosion->P.x;
             int32 MinY = (int32)Explosion->P.y;
-            PushBitmap(RenderGroup, GameState->ExplosionBitmaps + Explosion->FrameIndex, MinX, MinY, false, Explosion->Color);
+            PushBitmap(RenderGroup, Bitmap_Explosion, MinX, MinY,
+                       Explosion->FrameIndex, false, Explosion->Color);
         }
     }
 
@@ -1144,7 +1416,7 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
         char *LivesBuffer = PushArray(TranArena, 8, char);
         UInt32ToString(World->Lives, LivesBuffer, 1);
         PushString(RenderGroup, LivesBuffer, 8*TILE_SIZE, (TILE_COUNT_Y+1)*TILE_SIZE, Color_White);
-        PushBitmap(RenderGroup, &GameState->LivesBitmap, 9*TILE_SIZE, (TILE_COUNT_Y+1)*TILE_SIZE);
+        PushBitmap(RenderGroup, Bitmap_Lives, 9*TILE_SIZE, (TILE_COUNT_Y+1)*TILE_SIZE);
     }
 
     return(GameOver);
@@ -1215,48 +1487,11 @@ extern "C" GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
     game_state *GameState = (game_state *)Memory->PermanentStorage;
     if(!GameState->IsInitialized)
     {
-        GameState->GroundBitmaps[0] = DEBUGLoadBitmap("ground0.bmp");
-        GameState->GroundBitmaps[1] = DEBUGLoadBitmap("ground1.bmp");
-        GameState->GroundBitmaps[2] = DEBUGLoadBitmap("ground2.bmp");
+        GameState->MainArena = MakeArena(GameState + 1, Memory->PermanentStorageSize - sizeof(game_state));
+        GameState->Atlas = AllocateAtlas(&GameState->MainArena);
 
-        GameState->JetmanWalkingBitmaps[0] = DEBUGLoadBitmap("jetman0.bmp");
-        GameState->JetmanWalkingBitmaps[1] = DEBUGLoadBitmap("jetman1.bmp");
-        GameState->JetmanWalkingBitmaps[2] = DEBUGLoadBitmap("jetman2.bmp");
-
-        GameState->JetmanFlyingBitmaps[0] = DEBUGLoadBitmap("jetman3.bmp");
-        GameState->JetmanFlyingBitmaps[1] = DEBUGLoadBitmap("jetman4.bmp");
-        GameState->JetmanFlyingBitmaps[2] = DEBUGLoadBitmap("jetman5.bmp");
-
-        GameState->ExplosionBitmaps[0] = DEBUGLoadBitmap("explosion0.bmp");
-        GameState->ExplosionBitmaps[1] = DEBUGLoadBitmap("explosion1.bmp");
-        GameState->ExplosionBitmaps[2] = DEBUGLoadBitmap("explosion2.bmp");
-        GameState->ExplosionBitmaps[3] = DEBUGLoadBitmap("explosion3.bmp");
-        GameState->ExplosionBitmaps[4] = DEBUGLoadBitmap("explosion4.bmp");
-
-        GameState->PartBitmaps[0] = DEBUGLoadBitmap("part0.bmp");
-        GameState->PartBitmaps[1] = DEBUGLoadBitmap("part1.bmp");
-        GameState->PartBitmaps[2] = DEBUGLoadBitmap("part2.bmp");
-        GameState->PartBitmaps[3] = DEBUGLoadBitmap("part3.bmp");
-        GameState->PartBitmaps[4] = DEBUGLoadBitmap("part4.bmp");
-        GameState->PartBitmaps[5] = DEBUGLoadBitmap("part5.bmp");
-
-        GameState->FuelBitmap = DEBUGLoadBitmap("fuel.bmp");
-
-        GameState->FlameBitmaps[0] = DEBUGLoadBitmap("rocket_flame0.bmp");
-        GameState->FlameBitmaps[1] = DEBUGLoadBitmap("rocket_flame1.bmp");
-        GameState->FlameBitmaps[2] = DEBUGLoadBitmap("rocket_flame2.bmp");
-
-        GameState->AsteroidBitmaps[0] = DEBUGLoadBitmap("asteroid0.bmp");
-        GameState->AsteroidBitmaps[1] = DEBUGLoadBitmap("asteroid1.bmp");
-        GameState->AsteroidBitmaps[2] = DEBUGLoadBitmap("asteroid2.bmp");
-
-        GameState->LaserBitmap = DEBUGLoadBitmap("laser.bmp");
-        GameState->FontBitmap = DEBUGLoadBitmap("font.bmp");
-        GameState->LivesBitmap = DEBUGLoadBitmap("lives.bmp");
-
-        GameState->FaceBitmaps[0] = DEBUGLoadBitmap("face0.bmp");
-        GameState->FaceBitmaps[1] = DEBUGLoadBitmap("face1.bmp");
-        GameState->FaceBitmaps[2] = DEBUGLoadBitmap("face2.bmp");
+        GameState->WorldArena = SubArena(&GameState->MainArena);
+        GameState->World = AllocateWorld(&GameState->WorldArena);
 
         for(int32 TileY = 0;
             TileY < TILE_COUNT_Y+1;
@@ -1272,9 +1507,6 @@ extern "C" GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
             }
         }
 
-        GameState->WorldArena = MakeArena(GameState + 1, Memory->PermanentStorageSize - sizeof(game_state));
-        GameState->World = AllocateWorld(&GameState->WorldArena);
-
         GameState->IsInitialized = true;
     }
 
@@ -1288,7 +1520,7 @@ extern "C" GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
     }
 
     temp_memory TempRenderMemory = BeginTemporaryMemory(&TranState->TranArena);
-    render_group *RenderGroup = AllocateRenderGroup(&TranState->TranArena, Megabytes(8), Backbuffer, &GameState->FontBitmap);
+    render_group *RenderGroup = AllocateRenderGroup(&TranState->TranArena, Megabytes(8), Backbuffer, GameState->Atlas);
     PushClear(RenderGroup, Color_Black);
 
     switch(GameState->MetaPhase)

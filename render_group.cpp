@@ -165,18 +165,49 @@ PushRect(render_group *Group, rectangle2i Rect, color Color = Color_White, bool3
 }
 
 internal void
-PushBitmap(render_group *Group, game_bitmap *Bitmap, int32 MinX, int32 MinY,
-           bool32 MirrorX = false, color Color = Color_White, bool32 WrapX = true,
-           v2 UVOffset = {0.0f, 0.0f}, v2 UVScale = {1.0f, 1.0f})
+PushBitmap(render_group *Group, bitmap_id ID, int32 MinX, int32 MinY,
+           u32 FrameIndex = 0, bool32 MirrorX = false, color Color = Color_White,
+           bool32 WrapX = true, s32 FrameOffsetX = 0, s32 VisibleWidthArg = -1)
 {
     render_entry_base *Base = PushStruct(&Group->Arena, render_entry_base);
     Base->ID = RenderEntry_Bitmap;
 
+    bitmap_info Info_ = GetBitmapInfo(Group->Atlas, ID);
+    bitmap_info *Info = &Info_;
+    game_bitmap *Bitmap = GetBitmap(Group->Atlas, ID, FrameIndex);
+
+    Assert(FrameOffsetX >= 0);
+    Assert(FrameOffsetX <= Info->FrameWidth);
+
+    s32 VisibleWidth = VisibleWidthArg;
+    if(VisibleWidth < 0)
+    {
+        VisibleWidth = Info->FrameWidth - FrameOffsetX;
+    }
+    Assert(VisibleWidth >= 0);
+    Assert(VisibleWidth <= (Info->FrameWidth - FrameOffsetX));
+
+    s32 OffsetX;
+    s32 OffsetY = Info->OffsetY;
+
+    v2 UVScale = V2((r32)VisibleWidth*Info->InvFullWidth,
+                    (r32)Info->FrameHeight*Info->InvFullHeight);
+
+    // TODO(slava): Remove this when we start using atlas
+    s32 FakeFrameIndex = (ID == Bitmap_Font) ? FrameIndex : 0;
+
     if(MirrorX)
     {
-        UVOffset.x = 1.0f - UVOffset.x;
-        UVScale.x *= -1.0f;
+        OffsetX = (FakeFrameIndex + 1)*Info->FrameWidth - 1 - FrameOffsetX;
+        UVScale.x = -UVScale.x;
     }
+    else
+    {
+        OffsetX = FakeFrameIndex*Info->FrameWidth + FrameOffsetX;
+    }
+
+    v2 UVOffset = {(r32)OffsetX*Info->InvFullWidth,
+                   (r32)OffsetY*Info->InvFullHeight};
 
     render_entry_bitmap *Entry = PushStruct(&Group->Arena, render_entry_bitmap);
     Entry->Bitmap = Bitmap;
@@ -188,16 +219,16 @@ PushBitmap(render_group *Group, game_bitmap *Bitmap, int32 MinX, int32 MinY,
 
     if(WrapX)
     {
-        int32 MaxX = MinX + FloorReal32ToInt32(AbsoluteValue(UVScale.x)*(r32)Bitmap->Width);
+        int32 MaxX = MinX + VisibleWidth;
         if(MinX < 0)
         {
             MinX += Group->OutputBitmap->Width;
-            PushBitmap(Group, Bitmap, MinX, MinY, false, Color, false, UVOffset, UVScale);
+            PushBitmap(Group, ID, MinX, MinY, FrameIndex, MirrorX, Color, false, FrameOffsetX, VisibleWidthArg);
         }
         else if(MaxX > Group->OutputBitmap->Width)
         {
             MinX -= Group->OutputBitmap->Width;
-            PushBitmap(Group, Bitmap, MinX, MinY, false, Color, false, UVOffset, UVScale);
+            PushBitmap(Group, ID, MinX, MinY, FrameIndex, MirrorX, Color, false, FrameOffsetX, VisibleWidthArg);
         }
     }
 }
@@ -205,16 +236,14 @@ PushBitmap(render_group *Group, game_bitmap *Bitmap, int32 MinX, int32 MinY,
 internal void
 PushString(render_group *Group, char *String, int32 X, int32 Y, color Color)
 {
-    v2 UVScale = {(r32)TILE_SIZE/(r32)Group->FontBitmap->Width, 1.0f};
     int32 DestX = X;
     for(char *Letter = String;
         *Letter;
         ++Letter)
     {
-        int32 SourceX = (*Letter - ' ')*TILE_SIZE;
-        v2 UVOffset = {(r32)SourceX/Group->FontBitmap->Width, 0.0f};
-        PushBitmap(Group, Group->FontBitmap, DestX, Y,
-                   false, Color, false, UVOffset, UVScale);
+        u32 FrameIndex = *Letter - ' ';
+        PushBitmap(Group, Bitmap_Font, DestX, Y, FrameIndex,
+                   false, Color, false);
         DestX += TILE_SIZE;
     }
 }
@@ -233,7 +262,7 @@ ColorUInt32ToV4(uint32 Color)
 
 internal render_group *
 AllocateRenderGroup(memory_arena *Arena, memory_index PushBufferSize, game_bitmap *OutputBitmap,
-                    game_bitmap *FontBitmap)
+                    atlas *Atlas)
 {
     render_group *Group = PushStruct(Arena, render_group);
     Group->Arena = SubArena(Arena, PushBufferSize);
@@ -254,7 +283,8 @@ AllocateRenderGroup(memory_arena *Arena, memory_index PushBufferSize, game_bitma
     Group->Palette[Color_BrightCyan] = ColorUInt32ToV4(0x00FFFF);
     Group->Palette[Color_BrightYellow] = ColorUInt32ToV4(0xFFFF00);
 
-    Group->FontBitmap = FontBitmap;
+    Group->FontBitmap = &Atlas->FontBitmap;
+    Group->Atlas = Atlas;
 
     return(Group);
 }
