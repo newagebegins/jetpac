@@ -211,6 +211,8 @@ PushBitmap(render_group *Group, bitmap_id ID, int32 MinX, int32 MinY,
 
     render_entry_bitmap *Entry = PushStruct(&Group->Arena, render_entry_bitmap);
     Entry->Bitmap = Bitmap;
+    Entry->DimX = VisibleWidth;
+    Entry->DimY = Info->FrameHeight;
     Entry->MinX = MinX;
     Entry->MinY = MinY;
     Entry->Color = Group->Palette[Color];

@@ -51,7 +51,8 @@ struct render_entry_rect
 struct render_entry_bitmap
 {
     game_bitmap *Bitmap;
-    int32 MinX, MinY;
+    s32 DimX, DimY;
+    s32 MinX, MinY;
     v4 Color;
     v2 UVOffset;
     v2 UVScale;
