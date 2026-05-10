@@ -88,7 +88,6 @@ ClearArena(memory_arena *Arena)
     Arena->Used = 0;
 }
 
-#include "atlas.h"
 #include "render_group.h"
 
 enum part_state
@@ -245,7 +244,5 @@ struct transient_state
     bool32 IsInitialized;
     memory_arena TranArena;
 };
-
-global_variable debug_platform_read_entire_file *DEBUGPlatformReadEntireFile;
 
 #endif

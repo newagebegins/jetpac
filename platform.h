@@ -75,8 +75,7 @@ ZeroSize(void *Memory, memory_index Size)
 
 #define ZeroStruct(S) ZeroSize(&(S), sizeof(S))
 
-#define DEBUG_PLATFORM_READ_ENTIRE_FILE(name) void *name(char *FilePath)
-typedef DEBUG_PLATFORM_READ_ENTIRE_FILE(debug_platform_read_entire_file);
+#include "atlas.h"
 
 struct game_memory
 {
@@ -85,8 +84,6 @@ struct game_memory
 
     void *TransientStorage;
     uint32 TransientStorageSize;
-
-    debug_platform_read_entire_file *DEBUGPlatformReadEntireFile;
 };
 
 struct game_button
@@ -123,7 +120,7 @@ struct game_bitmap
     void *Pixels;
 };
 
-#define GAME_UPDATE_AND_RENDER(name) void name(game_memory *Memory, game_input *Input, game_bitmap *Backbuffer)
+#define GAME_UPDATE_AND_RENDER(name) void name(game_memory *Memory, game_input *Input, game_bitmap *Backbuffer, atlas *Atlas)
 typedef GAME_UPDATE_AND_RENDER(game_update_and_render);
 
 #endif

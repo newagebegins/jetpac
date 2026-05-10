@@ -2,17 +2,6 @@
 
 #include "render_group.cpp"
 
-internal atlas *
-AllocateAtlas(memory_arena *Arena)
-{
-    atlas *Atlas = PushStruct(Arena, atlas);
-    Atlas = (atlas *)DEBUGPlatformReadEntireFile("jetpac.atls");
-    Assert(Atlas->MagicValue == ATLAS_MAGIC_VALUE);
-    Assert(Atlas->Version == ATLAS_VERSION);
-
-    return(Atlas);
-}
-
 internal void
 AddExplosionAt(world *World, v2 P)
 {
@@ -1125,8 +1114,6 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
 
 extern "C" GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
 {
-    DEBUGPlatformReadEntireFile = Memory->DEBUGPlatformReadEntireFile;
-
     local_persist uint8 Tiles[TILE_COUNT_Y+1][TILE_COUNT_X] =
     {
         // NOTE(slava): Invisible ceiling (for collision)
@@ -1189,7 +1176,7 @@ extern "C" GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
     if(!GameState->IsInitialized)
     {
         GameState->MainArena = MakeArena(GameState + 1, Memory->PermanentStorageSize - sizeof(game_state));
-        GameState->Atlas = AllocateAtlas(&GameState->MainArena);
+        GameState->Atlas = Atlas;
 
         GameState->WorldArena = SubArena(&GameState->MainArena);
         GameState->World = AllocateWorld(&GameState->WorldArena);

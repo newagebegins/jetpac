@@ -24,7 +24,8 @@ Win32GetClientDim(HWND Window)
     return(Result);
 }
 
-DEBUG_PLATFORM_READ_ENTIRE_FILE(DEBUGPlatformReadEntireFile)
+internal void *
+Win32ReadEntireFile(char *FilePath)
 {
     HANDLE File = CreateFileA(FilePath, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING,
                               FILE_ATTRIBUTE_NORMAL, 0);
@@ -247,6 +248,18 @@ Win32LoadInput(HANDLE InputRecorderFile, game_input *Input)
 }
 #endif
 
+internal atlas *
+Win32AllocateAtlas()
+{
+    atlas *Atlas = (atlas *)VirtualAlloc(0, sizeof(atlas), MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
+    Assert(Atlas);
+    Atlas = (atlas *)Win32ReadEntireFile("jetpac.atls");
+    Assert(Atlas->MagicValue == ATLAS_MAGIC_VALUE);
+    Assert(Atlas->Version == ATLAS_VERSION);
+
+    return(Atlas);
+}
+
 int APIENTRY
 WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, char *CommandLine, int ShowCmd)
 {
@@ -369,7 +382,7 @@ WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, char *CommandLine, int ShowC
     Assert(Memory.PermanentStorage);
     Memory.TransientStorage = (uint8 *)Memory.PermanentStorage + Memory.PermanentStorageSize;
 
-    Memory.DEBUGPlatformReadEntireFile = DEBUGPlatformReadEntireFile;
+    atlas *Atlas = Win32AllocateAtlas();
 
     game_input Inputs[2] = {};
     game_input *OldInput = &Inputs[0];
@@ -526,7 +539,7 @@ WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, char *CommandLine, int ShowC
         }
 
         NewInput->dt = dt;
-        Game.UpdateAndRender(&Memory, NewInput, (game_bitmap *)Backbuffer);
+        Game.UpdateAndRender(&Memory, NewInput, (game_bitmap *)Backbuffer, Atlas);
 
         LARGE_INTEGER FrameEndCounter = Win32GetCounter();
         int64 CountsElapsed = FrameEndCounter.QuadPart - FrameStartCounter.QuadPart;
