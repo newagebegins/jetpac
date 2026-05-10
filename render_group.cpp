@@ -172,9 +172,11 @@ PushBitmap(render_group *Group, bitmap_id ID, int32 MinX, int32 MinY,
     render_entry_base *Base = PushStruct(&Group->Arena, render_entry_base);
     Base->ID = RenderEntry_Bitmap;
 
-    bitmap_info Info_ = GetBitmapInfo(Group->Atlas, ID);
-    bitmap_info *Info = &Info_;
-    game_bitmap *Bitmap = GetBitmap(Group->Atlas, ID, FrameIndex);
+    atlas *Atlas = Group->Atlas;
+    bitmap_info *Info = Atlas->Infos + ID;
+    game_bitmap *Bitmap = &Atlas->Bitmap;
+    r32 InvWidth = 1.0f / Bitmap->Width;
+    r32 InvHeight = 1.0f / Bitmap->Height;
 
     Assert(FrameOffsetX >= 0);
     Assert(FrameOffsetX <= Info->FrameWidth);
@@ -190,27 +192,23 @@ PushBitmap(render_group *Group, bitmap_id ID, int32 MinX, int32 MinY,
     s32 OffsetX;
     s32 OffsetY = Info->OffsetY;
 
-    v2 UVScale = V2((r32)VisibleWidth*Info->InvFullWidth,
-                    (r32)Info->FrameHeight*Info->InvFullHeight);
-
-    // TODO(slava): Remove this when we start using atlas
-    s32 FakeFrameIndex = (ID == Bitmap_Font) ? FrameIndex : 0;
+    v2 UVScale = V2((r32)VisibleWidth*InvWidth,
+                    (r32)Info->FrameHeight*InvHeight);
 
     if(MirrorX)
     {
-        OffsetX = (FakeFrameIndex + 1)*Info->FrameWidth - 1 - FrameOffsetX;
+        OffsetX = (FrameIndex + 1)*Info->FrameWidth - 1 - FrameOffsetX;
         UVScale.x = -UVScale.x;
     }
     else
     {
-        OffsetX = FakeFrameIndex*Info->FrameWidth + FrameOffsetX;
+        OffsetX = FrameIndex*Info->FrameWidth + FrameOffsetX;
     }
 
-    v2 UVOffset = {(r32)OffsetX*Info->InvFullWidth,
-                   (r32)OffsetY*Info->InvFullHeight};
+    v2 UVOffset = {(r32)OffsetX*InvWidth,
+                   (r32)OffsetY*InvHeight};
 
     render_entry_bitmap *Entry = PushStruct(&Group->Arena, render_entry_bitmap);
-    Entry->Bitmap = Bitmap;
     Entry->DimX = VisibleWidth;
     Entry->DimY = Info->FrameHeight;
     Entry->MinX = MinX;
@@ -333,7 +331,7 @@ RenderGroupToOutput(render_group *Group)
             case RenderEntry_Bitmap:
             {
                 render_entry_bitmap *Entry = (render_entry_bitmap *)(Base + 1);
-                DrawBitmap(Group->OutputBitmap, Entry->Bitmap, Entry->MinX, Entry->MinY, Entry->Color, Entry->UVOffset, Entry->UVScale);
+                DrawBitmap(Group->OutputBitmap, &Group->Atlas->Bitmap, Entry->MinX, Entry->MinY, Entry->Color, Entry->UVOffset, Entry->UVScale);
                 Base = (render_entry_base *)(Entry + 1);
             } break;
 

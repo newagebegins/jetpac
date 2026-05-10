@@ -48,185 +48,55 @@ DEBUGLoadBitmap(char *FilePath)
     return(Result);
 }
 
-inline bitmap_info
-GetBitmapInfo(atlas *Atlas, bitmap_id ID)
+internal void
+CopyBitmap(atlas *Atlas, game_bitmap *Bitmap, s32 DestX, s32 DestY)
 {
-    bitmap_info Info = {};
-    game_bitmap *Bitmap = 0;
+    u8 *DestRow = (u8 *)Atlas->Bitmap.Pixels + DestY*Atlas->Bitmap.Pitch + DestX*BITMAP_BYTES_PER_PIXEL;
+    u8 *SourceRow = (u8 *)Bitmap->Pixels;
 
-    switch(ID)
+    for(s32 Y = 0;
+        Y < Bitmap->Height;
+        ++Y)
     {
-        case Bitmap_JetmanWalking:
-        {
-            Info.FrameCount = ArrayCount(Atlas->JetmanWalkingBitmaps);
-            Bitmap = Atlas->JetmanWalkingBitmaps;
-        } break;
+        u32 *Dest = (u32 *)DestRow;
+        u32 *Source = (u32 *)SourceRow;
 
-        case Bitmap_JetmanFlying:
+        for(s32 X = 0;
+            X < Bitmap->Width;
+            ++X)
         {
-            Info.FrameCount = ArrayCount(Atlas->JetmanFlyingBitmaps);
-            Bitmap = Atlas->JetmanFlyingBitmaps;
-        } break;
+            *Dest++ = *Source++;
+        }
 
-        case Bitmap_Font:
-        {
-            Bitmap = &Atlas->FontBitmap;
-            Info.FrameWidth = TILE_SIZE;
-            Info.FrameCount = Bitmap->Width / Info.FrameWidth;
-        } break;
-
-        case Bitmap_Laser:
-        {
-            Info.FrameCount = 1;
-            Bitmap = &Atlas->LaserBitmap;
-        } break;
-
-        case Bitmap_Part:
-        {
-            Info.FrameCount = ArrayCount(Atlas->PartBitmaps);
-            Bitmap = Atlas->PartBitmaps;
-        } break;
-
-        case Bitmap_Fuel:
-        {
-            Info.FrameCount = 1;
-            Bitmap = &Atlas->FuelBitmap;
-        } break;
-
-        case Bitmap_Flame:
-        {
-            Info.FrameCount = ArrayCount(Atlas->FlameBitmaps);
-            Bitmap = Atlas->FlameBitmaps;
-        } break;
-
-        case Bitmap_Asteroid:
-        {
-            Info.FrameCount = ArrayCount(Atlas->AsteroidBitmaps);
-            Bitmap = Atlas->AsteroidBitmaps;
-        } break;
-
-        case Bitmap_Face:
-        {
-            Info.FrameCount = ArrayCount(Atlas->FaceBitmaps);
-            Bitmap = Atlas->FaceBitmaps;
-        } break;
-
-        case Bitmap_Ground:
-        {
-            Info.FrameCount = ArrayCount(Atlas->GroundBitmaps);
-            Bitmap = Atlas->GroundBitmaps;
-        } break;
-
-        case Bitmap_Explosion:
-        {
-            Info.FrameCount = ArrayCount(Atlas->ExplosionBitmaps);
-            Bitmap = Atlas->ExplosionBitmaps;
-        } break;
-
-        case Bitmap_Lives:
-        {
-            Info.FrameCount = 1;
-            Bitmap = &Atlas->LivesBitmap;
-        } break;
-
-        InvalidDefaultCase;
+        DestRow += Atlas->Bitmap.Pitch;
+        SourceRow += Bitmap->Pitch;
     }
-
-    if(Info.FrameWidth == 0)
-    {
-        Info.FrameWidth = Bitmap->Width;
-    }
-    Info.FrameHeight = Bitmap->Height;
-    Info.InvFullWidth = 1.0f / (r32)Bitmap->Width;
-    Info.InvFullHeight = 1.0f / (r32)Bitmap->Height;
-    Info.OffsetY = 0;
-
-    return(Info);
 }
 
-internal game_bitmap *
-GetBitmap(atlas *Atlas, bitmap_id ID, u32 FrameIndex)
+inline void
+CopyBitmaps(atlas *Atlas, bitmap_id ID, game_bitmap *Bitmaps, s32 BitmapCount, s32 *DestY, s32 FrameWidth = 0)
 {
-    game_bitmap *Bitmap = 0;
+    bitmap_info *Info = Atlas->Infos + ID;
+    Info->FrameCount = BitmapCount;
+    Info->FrameWidth = FrameWidth ? FrameWidth : Bitmaps[0].Width;
+    Info->FrameHeight = Bitmaps[0].Height;
+    Info->OffsetY = *DestY;
 
-    switch(ID)
+    for(s32 BitmapIndex = 0;
+        BitmapIndex < BitmapCount;
+        ++BitmapIndex)
     {
-        case Bitmap_JetmanWalking:
-        {
-            Assert(FrameIndex < ArrayCount(Atlas->JetmanWalkingBitmaps));
-            Bitmap = Atlas->JetmanWalkingBitmaps + FrameIndex;
-        } break;
-
-        case Bitmap_JetmanFlying:
-        {
-            Assert(FrameIndex < ArrayCount(Atlas->JetmanFlyingBitmaps));
-            Bitmap = Atlas->JetmanFlyingBitmaps + FrameIndex;
-        } break;
-
-        case Bitmap_Font:
-        {
-            Bitmap = &Atlas->FontBitmap;
-        } break;
-
-        case Bitmap_Laser:
-        {
-            Assert(FrameIndex == 0);
-            Bitmap = &Atlas->LaserBitmap;
-        } break;
-
-        case Bitmap_Part:
-        {
-            Assert(FrameIndex < ArrayCount(Atlas->PartBitmaps));
-            Bitmap = Atlas->PartBitmaps + FrameIndex;
-        } break;
-
-        case Bitmap_Fuel:
-        {
-            Assert(FrameIndex == 0);
-            Bitmap = &Atlas->FuelBitmap;
-        } break;
-
-        case Bitmap_Flame:
-        {
-            Assert(FrameIndex < ArrayCount(Atlas->FlameBitmaps));
-            Bitmap = Atlas->FlameBitmaps + FrameIndex;
-        } break;
-
-        case Bitmap_Asteroid:
-        {
-            Assert(FrameIndex < ArrayCount(Atlas->AsteroidBitmaps));
-            Bitmap = Atlas->AsteroidBitmaps + FrameIndex;
-        } break;
-
-        case Bitmap_Face:
-        {
-            Assert(FrameIndex < ArrayCount(Atlas->FaceBitmaps));
-            Bitmap = Atlas->FaceBitmaps + FrameIndex;
-        } break;
-
-        case Bitmap_Ground:
-        {
-            Assert(FrameIndex < ArrayCount(Atlas->GroundBitmaps));
-            Bitmap = Atlas->GroundBitmaps + FrameIndex;
-        } break;
-
-        case Bitmap_Explosion:
-        {
-            Assert(FrameIndex < ArrayCount(Atlas->ExplosionBitmaps));
-            Bitmap = Atlas->ExplosionBitmaps + FrameIndex;
-        } break;
-
-        case Bitmap_Lives:
-        {
-            Assert(FrameIndex == 0);
-            Bitmap = &Atlas->LivesBitmap;
-        } break;
-
-        InvalidDefaultCase;
+        s32 DestX = BitmapIndex*Info->FrameWidth;
+        CopyBitmap(Atlas, Bitmaps + BitmapIndex, DestX, *DestY);
     }
 
-    return(Bitmap);
+    *DestY += Info->FrameHeight;
 }
+
+#if 0
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+#endif
 
 internal atlas *
 AllocateAtlas(memory_arena *Arena)
@@ -276,38 +146,33 @@ AllocateAtlas(memory_arena *Arena)
     Atlas->FaceBitmaps[1] = DEBUGLoadBitmap("face1.bmp");
     Atlas->FaceBitmaps[2] = DEBUGLoadBitmap("face2.bmp");
 
-    u32 AtlasDim = 512;
-    u32 AtlasPitch = AtlasDim*BITMAP_BYTES_PER_PIXEL;
-    u32 AtlasSize = AtlasDim*AtlasPitch;
-    Atlas->AtlasMemory = (u32 *)PushSize(Arena, AtlasSize);
+    Atlas->Bitmap.Width = Atlas->Bitmap.Height = 512;
+    Atlas->Bitmap.Pitch = Atlas->Bitmap.Width*BITMAP_BYTES_PER_PIXEL;
+    u32 AtlasSize = Atlas->Bitmap.Height*Atlas->Bitmap.Pitch;
+    Atlas->Bitmap.Pixels = (u32 *)PushSize(Arena, AtlasSize);
 
-    for(u32 BitmapIndex = 0;
-        BitmapIndex < ArrayCount(Atlas->ExplosionBitmaps);
-        ++BitmapIndex)
-    {
-        game_bitmap *Bitmap = Atlas->ExplosionBitmaps + 0;
+    s32 DestY = 0;
 
-        u8 *DestRow = (u8 *)Atlas->AtlasMemory + BitmapIndex*Bitmap->Width*BITMAP_BYTES_PER_PIXEL;
-        u8 *SourceRow = (u8 *)Bitmap->Pixels;
+    CopyBitmaps(Atlas, Bitmap_Ground, Atlas->GroundBitmaps, ArrayCount(Atlas->GroundBitmaps), &DestY);
+    CopyBitmaps(Atlas, Bitmap_JetmanWalking, Atlas->JetmanWalkingBitmaps, ArrayCount(Atlas->JetmanWalkingBitmaps), &DestY);
+    CopyBitmaps(Atlas, Bitmap_JetmanFlying, Atlas->JetmanFlyingBitmaps, ArrayCount(Atlas->JetmanFlyingBitmaps), &DestY);
+    CopyBitmaps(Atlas, Bitmap_Explosion, Atlas->ExplosionBitmaps, ArrayCount(Atlas->ExplosionBitmaps), &DestY);
+    CopyBitmaps(Atlas, Bitmap_Part, Atlas->PartBitmaps, ArrayCount(Atlas->PartBitmaps), &DestY);
+    CopyBitmaps(Atlas, Bitmap_Asteroid, Atlas->AsteroidBitmaps, ArrayCount(Atlas->AsteroidBitmaps), &DestY);
+    CopyBitmaps(Atlas, Bitmap_Flame, Atlas->FlameBitmaps, ArrayCount(Atlas->FlameBitmaps), &DestY);
+    CopyBitmaps(Atlas, Bitmap_Face, Atlas->FaceBitmaps, ArrayCount(Atlas->FaceBitmaps), &DestY);
 
-        for(s32 Y = 0;
-            Y < Bitmap->Height;
-            ++Y)
-        {
-            u32 *Dest = (u32 *)DestRow;
-            u32 *Source = (u32 *)SourceRow;
+    CopyBitmaps(Atlas, Bitmap_Laser, &Atlas->LaserBitmap, 1, &DestY);
+    CopyBitmaps(Atlas, Bitmap_Fuel, &Atlas->FuelBitmap, 1, &DestY);
+    CopyBitmaps(Atlas, Bitmap_Font, &Atlas->FontBitmap, 1, &DestY, TILE_SIZE);
+    CopyBitmaps(Atlas, Bitmap_Lives, &Atlas->LivesBitmap, 1, &DestY);
 
-            for(s32 X = 0;
-                X < Bitmap->Width;
-                ++X)
-            {
-                *Dest++ = *Source++;
-            }
+    Assert(DestY <= Atlas->Bitmap.Height);
 
-            DestRow += AtlasPitch;
-            SourceRow += Bitmap->Pitch;
-        }
-    }
+#if 0
+    stbi_flip_vertically_on_write(1); 
+    stbi_write_bmp("atlas.bmp", Atlas->Bitmap.Width, Atlas->Bitmap.Height, 4, Atlas->Bitmap.Pixels);
+#endif
 
     return(Atlas);
 }
@@ -676,8 +541,8 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
             if(Player->FrameTimer >= FrameDuration)
             {
                 Player->FrameTimer -= FrameDuration;
-                bitmap_info Info = GetBitmapInfo(GameState->Atlas, Bitmap_JetmanFlying);
-                Player->FrameIndex = (Player->FrameIndex + 1) % Info.FrameCount;
+                bitmap_info *Info = GameState->Atlas->Infos + Bitmap_JetmanFlying;
+                Player->FrameIndex = (Player->FrameIndex + 1) % Info->FrameCount;
             }
         }
         else
@@ -1144,7 +1009,7 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
     // NOTE(slava): Draw rocket and fuel
     //
 
-    bitmap_info PartInfo = GetBitmapInfo(GameState->Atlas, Bitmap_Part);
+    bitmap_info *PartInfo = GameState->Atlas->Infos + Bitmap_Part;
 
     if(World->InstalledPartsCount < 3)
     {
@@ -1164,7 +1029,7 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
         int32 InstalledFuelCount = World->InstalledPartsCount - 3;
 
         for(int32 BitmapIndex = 0;
-            BitmapIndex < PartInfo.FrameCount;
+            BitmapIndex < PartInfo->FrameCount;
             ++BitmapIndex)
         {
             color Color = BitmapIndex < InstalledFuelCount ? Color_Magenta : Color_White;
@@ -1179,7 +1044,7 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
     else
     {
         for(int32 BitmapIndex = 0;
-            BitmapIndex < PartInfo.FrameCount;
+            BitmapIndex < PartInfo->FrameCount;
             ++BitmapIndex)
         {
             PushBitmap(RenderGroup, Bitmap_Part,
@@ -1194,8 +1059,8 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
             if(World->FlameFrameTimer >= FlameFrameDuration)
             {
                 World->FlameFrameTimer -= FlameFrameDuration;
-                bitmap_info Info = GetBitmapInfo(GameState->Atlas, Bitmap_Flame);
-                World->FlameFrameIndex = (World->FlameFrameIndex + 1) % Info.FrameCount;
+                bitmap_info *Info = GameState->Atlas->Infos + Bitmap_Flame;
+                World->FlameFrameIndex = (World->FlameFrameIndex + 1) % Info->FrameCount;
             }
             PushBitmap(RenderGroup, Bitmap_Flame,
                        ROCKET_X, (int32)World->RocketY - 2*TILE_SIZE,
@@ -1343,8 +1208,8 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
                     InvalidDefaultCase;
                 }
 
-                bitmap_info BitmapInfo = GetBitmapInfo(GameState->Atlas, BitmapID);
-                int32 BitmapCount = BitmapInfo.FrameCount;
+                bitmap_info *BitmapInfo = GameState->Atlas->Infos + BitmapID;
+                int32 BitmapCount = BitmapInfo->FrameCount;
 
                 Enemy->FrameTimer += Input->dt;
                 real32 FrameDuration = 0.05f;
@@ -1380,7 +1245,7 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
         }
     }
 
-    bitmap_info ExplosionInfo = GetBitmapInfo(GameState->Atlas, Bitmap_Explosion);
+    bitmap_info *ExplosionInfo = GameState->Atlas->Infos + Bitmap_Explosion;
 
     for(int32 ExplosionIndex = 0;
         ExplosionIndex < ArrayCount(World->Explosions);
@@ -1394,7 +1259,7 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
             if(Explosion->FrameTimer >= FrameDuration)
             {
                 Explosion->FrameTimer -= FrameDuration;
-                if(Explosion->FrameIndex == ExplosionInfo.FrameCount - 1)
+                if(Explosion->FrameIndex == ExplosionInfo->FrameCount - 1)
                 {
                     Explosion->IsActive = false;
                 }

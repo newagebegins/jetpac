@@ -113,6 +113,8 @@ enum bitmap_id
     Bitmap_Ground,
     Bitmap_Explosion,
     Bitmap_Lives,
+
+    Bitmap_Count,
 };
 
 struct bitmap_info
@@ -120,8 +122,6 @@ struct bitmap_info
     s32 FrameCount;
     s32 FrameWidth;
     s32 FrameHeight;
-    r32 InvFullWidth;
-    r32 InvFullHeight;
     s32 OffsetY;
 };
 
@@ -133,19 +133,18 @@ struct atlas
     game_bitmap ExplosionBitmaps[5];
     game_bitmap PartBitmaps[6];
     game_bitmap AsteroidBitmaps[3];
+    game_bitmap FlameBitmaps[3];
+    game_bitmap FaceBitmaps[3];
     game_bitmap LaserBitmap;
     game_bitmap FuelBitmap;
-    game_bitmap FlameBitmaps[3];
     game_bitmap FontBitmap;
     game_bitmap LivesBitmap;
-    game_bitmap FaceBitmaps[3];
+
+    bitmap_info Infos[Bitmap_Count];
 
     memory_arena Arena;
-    u32 *AtlasMemory;
+    game_bitmap Bitmap;
 };
-
-internal game_bitmap *GetBitmap(atlas *Atlas, bitmap_id ID, u32 FrameIndex);
-inline bitmap_info GetBitmapInfo(atlas *Atlas, bitmap_id ID);
 
 #include "render_group.h"
 
