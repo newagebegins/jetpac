@@ -62,8 +62,8 @@ struct render_group
     memory_arena Arena;
     game_bitmap *OutputBitmap;
     v4 Palette[Color_Count];
-    game_bitmap *FontBitmap;
     atlas *Atlas;
+    game_bitmap *AtlasBitmap;
 };
 
 #endif

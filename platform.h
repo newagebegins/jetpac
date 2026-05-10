@@ -63,6 +63,18 @@ typedef double r64;
 #define InvalidCodePath Assert(!"Invalid code path")
 #define InvalidDefaultCase default: { InvalidCodePath } break
 
+internal void
+ZeroSize(void *Memory, memory_index Size)
+{
+    uint8 *Dest = (uint8 *)Memory;
+    while(Size--)
+    {
+        *Dest++ = 0;
+    }
+}
+
+#define ZeroStruct(S) ZeroSize(&(S), sizeof(S))
+
 #define DEBUG_PLATFORM_READ_ENTIRE_FILE(name) void *name(char *FilePath)
 typedef DEBUG_PLATFORM_READ_ENTIRE_FILE(debug_platform_read_entire_file);
 

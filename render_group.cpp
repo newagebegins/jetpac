@@ -174,9 +174,8 @@ PushBitmap(render_group *Group, bitmap_id ID, int32 MinX, int32 MinY,
 
     atlas *Atlas = Group->Atlas;
     bitmap_info *Info = Atlas->Infos + ID;
-    game_bitmap *Bitmap = &Atlas->Bitmap;
-    r32 InvWidth = 1.0f / Bitmap->Width;
-    r32 InvHeight = 1.0f / Bitmap->Height;
+    r32 InvWidth = 1.0f / Group->AtlasBitmap->Width;
+    r32 InvHeight = 1.0f / Group->AtlasBitmap->Height;
 
     Assert(FrameOffsetX >= 0);
     Assert(FrameOffsetX <= Info->FrameWidth);
@@ -283,8 +282,15 @@ AllocateRenderGroup(memory_arena *Arena, memory_index PushBufferSize, game_bitma
     Group->Palette[Color_BrightCyan] = ColorUInt32ToV4(0x00FFFF);
     Group->Palette[Color_BrightYellow] = ColorUInt32ToV4(0xFFFF00);
 
-    Group->FontBitmap = &Atlas->FontBitmap;
     Group->Atlas = Atlas;
+
+    game_bitmap *AtlasBitmap = PushStruct(Arena, game_bitmap);
+    AtlasBitmap->Width = ATLAS_WIDTH;
+    AtlasBitmap->Height = ATLAS_HEIGHT;
+    AtlasBitmap->Pitch = ATLAS_PITCH;
+    AtlasBitmap->Pixels = Atlas->Pixels;
+
+    Group->AtlasBitmap = AtlasBitmap;
 
     return(Group);
 }
@@ -331,7 +337,7 @@ RenderGroupToOutput(render_group *Group)
             case RenderEntry_Bitmap:
             {
                 render_entry_bitmap *Entry = (render_entry_bitmap *)(Base + 1);
-                DrawBitmap(Group->OutputBitmap, &Group->Atlas->Bitmap, Entry->MinX, Entry->MinY, Entry->Color, Entry->UVOffset, Entry->UVScale);
+                DrawBitmap(Group->OutputBitmap, Group->AtlasBitmap, Entry->MinX, Entry->MinY, Entry->Color, Entry->UVOffset, Entry->UVScale);
                 Base = (render_entry_base *)(Entry + 1);
             } break;
 

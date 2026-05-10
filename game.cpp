@@ -2,177 +2,13 @@
 
 #include "render_group.cpp"
 
-#pragma pack(push, 1)
-struct bitmap_file_header
-{
-    uint16 Id;
-    uint32 FileSize;
-    uint32 Reserved;
-    uint32 PixelsOffset;
-};
-
-struct dib_header
-{
-    uint32 HeaderSize;
-    int32 BitmapWidth;
-    int32 BitmapHeight;
-    uint16 ColorPlanesCount;
-    uint16 BitsPerPixel;
-    uint32 Compression;
-    uint32 ImageSize;
-    int32 HorizontalResolution;
-    int32 VerticalResolution;
-    uint32 PaletteColorsCount;
-    uint32 ImportantColorsCount;
-    uint32 RedMask;
-    uint32 GreenMask;
-    uint32 BlueMask;
-    uint32 AlphaMask;
-};
-#pragma pack(pop)
-
-internal game_bitmap
-DEBUGLoadBitmap(char *FilePath)
-{
-    game_bitmap Result;
-    void *FileContents = DEBUGPlatformReadEntireFile(FilePath);
-    bitmap_file_header *FileHeader = (bitmap_file_header *)FileContents;
-    Assert(FileHeader->Id == 0x4D42);
-    dib_header *DIBHeader = (dib_header *)((uint8 *)FileContents + sizeof(bitmap_file_header));
-    Assert(DIBHeader->Compression == 3);
-    Assert(DIBHeader->BitsPerPixel == BITMAP_BYTES_PER_PIXEL*8);
-    Result.Width = DIBHeader->BitmapWidth;
-    Result.Height = DIBHeader->BitmapHeight;
-    Result.Pitch = DIBHeader->BitmapWidth*BITMAP_BYTES_PER_PIXEL;
-    Result.Pixels = (uint32 *)((uint8 *)FileContents + FileHeader->PixelsOffset);
-    return(Result);
-}
-
-internal void
-CopyBitmap(atlas *Atlas, game_bitmap *Bitmap, s32 DestX, s32 DestY)
-{
-    u8 *DestRow = (u8 *)Atlas->Bitmap.Pixels + DestY*Atlas->Bitmap.Pitch + DestX*BITMAP_BYTES_PER_PIXEL;
-    u8 *SourceRow = (u8 *)Bitmap->Pixels;
-
-    for(s32 Y = 0;
-        Y < Bitmap->Height;
-        ++Y)
-    {
-        u32 *Dest = (u32 *)DestRow;
-        u32 *Source = (u32 *)SourceRow;
-
-        for(s32 X = 0;
-            X < Bitmap->Width;
-            ++X)
-        {
-            *Dest++ = *Source++;
-        }
-
-        DestRow += Atlas->Bitmap.Pitch;
-        SourceRow += Bitmap->Pitch;
-    }
-}
-
-inline void
-CopyBitmaps(atlas *Atlas, bitmap_id ID, game_bitmap *Bitmaps, s32 BitmapCount, s32 *DestY, s32 FrameWidth = 0)
-{
-    bitmap_info *Info = Atlas->Infos + ID;
-    Info->FrameCount = BitmapCount;
-    Info->FrameWidth = FrameWidth ? FrameWidth : Bitmaps[0].Width;
-    Info->FrameHeight = Bitmaps[0].Height;
-    Info->OffsetY = *DestY;
-
-    for(s32 BitmapIndex = 0;
-        BitmapIndex < BitmapCount;
-        ++BitmapIndex)
-    {
-        s32 DestX = BitmapIndex*Info->FrameWidth;
-        CopyBitmap(Atlas, Bitmaps + BitmapIndex, DestX, *DestY);
-    }
-
-    *DestY += Info->FrameHeight;
-}
-
-#if 0
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
-#endif
-
 internal atlas *
 AllocateAtlas(memory_arena *Arena)
 {
     atlas *Atlas = PushStruct(Arena, atlas);
-
-    Atlas->GroundBitmaps[0] = DEBUGLoadBitmap("ground0.bmp");
-    Atlas->GroundBitmaps[1] = DEBUGLoadBitmap("ground1.bmp");
-    Atlas->GroundBitmaps[2] = DEBUGLoadBitmap("ground2.bmp");
-
-    Atlas->JetmanWalkingBitmaps[0] = DEBUGLoadBitmap("jetman0.bmp");
-    Atlas->JetmanWalkingBitmaps[1] = DEBUGLoadBitmap("jetman1.bmp");
-    Atlas->JetmanWalkingBitmaps[2] = DEBUGLoadBitmap("jetman2.bmp");
-
-    Atlas->JetmanFlyingBitmaps[0] = DEBUGLoadBitmap("jetman3.bmp");
-    Atlas->JetmanFlyingBitmaps[1] = DEBUGLoadBitmap("jetman4.bmp");
-    Atlas->JetmanFlyingBitmaps[2] = DEBUGLoadBitmap("jetman5.bmp");
-
-    Atlas->ExplosionBitmaps[0] = DEBUGLoadBitmap("explosion0.bmp");
-    Atlas->ExplosionBitmaps[1] = DEBUGLoadBitmap("explosion1.bmp");
-    Atlas->ExplosionBitmaps[2] = DEBUGLoadBitmap("explosion2.bmp");
-    Atlas->ExplosionBitmaps[3] = DEBUGLoadBitmap("explosion3.bmp");
-    Atlas->ExplosionBitmaps[4] = DEBUGLoadBitmap("explosion4.bmp");
-
-    Atlas->PartBitmaps[0] = DEBUGLoadBitmap("part0.bmp");
-    Atlas->PartBitmaps[1] = DEBUGLoadBitmap("part1.bmp");
-    Atlas->PartBitmaps[2] = DEBUGLoadBitmap("part2.bmp");
-    Atlas->PartBitmaps[3] = DEBUGLoadBitmap("part3.bmp");
-    Atlas->PartBitmaps[4] = DEBUGLoadBitmap("part4.bmp");
-    Atlas->PartBitmaps[5] = DEBUGLoadBitmap("part5.bmp");
-
-    Atlas->FuelBitmap = DEBUGLoadBitmap("fuel.bmp");
-
-    Atlas->FlameBitmaps[0] = DEBUGLoadBitmap("rocket_flame0.bmp");
-    Atlas->FlameBitmaps[1] = DEBUGLoadBitmap("rocket_flame1.bmp");
-    Atlas->FlameBitmaps[2] = DEBUGLoadBitmap("rocket_flame2.bmp");
-
-    Atlas->AsteroidBitmaps[0] = DEBUGLoadBitmap("asteroid0.bmp");
-    Atlas->AsteroidBitmaps[1] = DEBUGLoadBitmap("asteroid1.bmp");
-    Atlas->AsteroidBitmaps[2] = DEBUGLoadBitmap("asteroid2.bmp");
-
-    Atlas->LaserBitmap = DEBUGLoadBitmap("laser.bmp");
-    Atlas->FontBitmap = DEBUGLoadBitmap("font.bmp");
-    Atlas->LivesBitmap = DEBUGLoadBitmap("lives.bmp");
-
-    Atlas->FaceBitmaps[0] = DEBUGLoadBitmap("face0.bmp");
-    Atlas->FaceBitmaps[1] = DEBUGLoadBitmap("face1.bmp");
-    Atlas->FaceBitmaps[2] = DEBUGLoadBitmap("face2.bmp");
-
-    Atlas->Bitmap.Width = Atlas->Bitmap.Height = 512;
-    Atlas->Bitmap.Pitch = Atlas->Bitmap.Width*BITMAP_BYTES_PER_PIXEL;
-    u32 AtlasSize = Atlas->Bitmap.Height*Atlas->Bitmap.Pitch;
-    Atlas->Bitmap.Pixels = (u32 *)PushSize(Arena, AtlasSize);
-
-    s32 DestY = 0;
-
-    CopyBitmaps(Atlas, Bitmap_Ground, Atlas->GroundBitmaps, ArrayCount(Atlas->GroundBitmaps), &DestY);
-    CopyBitmaps(Atlas, Bitmap_JetmanWalking, Atlas->JetmanWalkingBitmaps, ArrayCount(Atlas->JetmanWalkingBitmaps), &DestY);
-    CopyBitmaps(Atlas, Bitmap_JetmanFlying, Atlas->JetmanFlyingBitmaps, ArrayCount(Atlas->JetmanFlyingBitmaps), &DestY);
-    CopyBitmaps(Atlas, Bitmap_Explosion, Atlas->ExplosionBitmaps, ArrayCount(Atlas->ExplosionBitmaps), &DestY);
-    CopyBitmaps(Atlas, Bitmap_Part, Atlas->PartBitmaps, ArrayCount(Atlas->PartBitmaps), &DestY);
-    CopyBitmaps(Atlas, Bitmap_Asteroid, Atlas->AsteroidBitmaps, ArrayCount(Atlas->AsteroidBitmaps), &DestY);
-    CopyBitmaps(Atlas, Bitmap_Flame, Atlas->FlameBitmaps, ArrayCount(Atlas->FlameBitmaps), &DestY);
-    CopyBitmaps(Atlas, Bitmap_Face, Atlas->FaceBitmaps, ArrayCount(Atlas->FaceBitmaps), &DestY);
-
-    CopyBitmaps(Atlas, Bitmap_Laser, &Atlas->LaserBitmap, 1, &DestY);
-    CopyBitmaps(Atlas, Bitmap_Fuel, &Atlas->FuelBitmap, 1, &DestY);
-    CopyBitmaps(Atlas, Bitmap_Font, &Atlas->FontBitmap, 1, &DestY, TILE_SIZE);
-    CopyBitmaps(Atlas, Bitmap_Lives, &Atlas->LivesBitmap, 1, &DestY);
-
-    Assert(DestY <= Atlas->Bitmap.Height);
-
-#if 0
-    stbi_flip_vertically_on_write(1); 
-    stbi_write_bmp("atlas.bmp", Atlas->Bitmap.Width, Atlas->Bitmap.Height, 4, Atlas->Bitmap.Pixels);
-#endif
+    Atlas = (atlas *)DEBUGPlatformReadEntireFile("jetpac.atls");
+    Assert(Atlas->MagicValue == ATLAS_MAGIC_VALUE);
+    Assert(Atlas->Version == ATLAS_VERSION);
 
     return(Atlas);
 }
@@ -438,7 +274,7 @@ internal world *
 AllocateWorld(memory_arena *Arena)
 {
     world *World = PushStruct(Arena, world);
-    ZeroMemory(World, sizeof(world));
+    ZeroStruct(*World);
 
     World->Series = RandomSeries(123);
 

@@ -88,64 +88,7 @@ ClearArena(memory_arena *Arena)
     Arena->Used = 0;
 }
 
-internal void
-ZeroMemory(void *Memory, memory_index Size)
-{
-    uint8 *Dest = (uint8 *)Memory;
-    while(Size--)
-    {
-        *Dest++ = 0;
-    }
-}
-
-enum bitmap_id
-{
-    Bitmap_None,
-    Bitmap_JetmanWalking,
-    Bitmap_JetmanFlying,
-    Bitmap_Font,
-    Bitmap_Laser,
-    Bitmap_Part,
-    Bitmap_Fuel,
-    Bitmap_Flame,
-    Bitmap_Asteroid,
-    Bitmap_Face,
-    Bitmap_Ground,
-    Bitmap_Explosion,
-    Bitmap_Lives,
-
-    Bitmap_Count,
-};
-
-struct bitmap_info
-{
-    s32 FrameCount;
-    s32 FrameWidth;
-    s32 FrameHeight;
-    s32 OffsetY;
-};
-
-struct atlas
-{    
-    game_bitmap GroundBitmaps[3];
-    game_bitmap JetmanWalkingBitmaps[3];
-    game_bitmap JetmanFlyingBitmaps[3];
-    game_bitmap ExplosionBitmaps[5];
-    game_bitmap PartBitmaps[6];
-    game_bitmap AsteroidBitmaps[3];
-    game_bitmap FlameBitmaps[3];
-    game_bitmap FaceBitmaps[3];
-    game_bitmap LaserBitmap;
-    game_bitmap FuelBitmap;
-    game_bitmap FontBitmap;
-    game_bitmap LivesBitmap;
-
-    bitmap_info Infos[Bitmap_Count];
-
-    memory_arena Arena;
-    game_bitmap Bitmap;
-};
-
+#include "atlas.h"
 #include "render_group.h"
 
 enum part_state
