@@ -29,9 +29,9 @@ struct render_entry_bitmap
 {
     s32 DimX, DimY;
     s32 MinX, MinY;
-    v4 Color;
-    v2 UVOffset;
     v2 UVScale;
+    v2 UVOffset;
+    v4 Color;
 };
 
 #endif

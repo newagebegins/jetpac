@@ -22,9 +22,6 @@ function main()
         
         const pixels = new Uint8Array(atlasBuffer, atlasPixelsOffset, atlasPixelsSize);
 
-        let memoryView = new DataView(memory.buffer);
-        let memoryUint8 = new Uint8Array(memory.buffer);
-
         // Memory map:
         // struct game_memory (20)
         // struct game_input (44)
@@ -32,11 +29,13 @@ function main()
         // bitmap_info (bitmapInfosSize)
         // renderList (renderListSize)
 
-        let gameMemoryOffset = 0;
-        let gameMemorySize = 20;
+        const gameMemoryOffset = 0;
+        const gameMemoryLength = 5;
+        const gameMemorySize = gameMemoryLength*Uint32Array.BYTES_PER_ELEMENT;
 
-        let gameInputOffset = gameMemoryOffset + gameMemorySize;
-        let gameInputSize = 44;
+        const gameInputOffset = gameMemoryOffset + gameMemorySize;
+        const gameInputLength = 11;
+        const gameInputSize = gameInputLength*Uint32Array.BYTES_PER_ELEMENT;
 
         let permanentStorageOffset = gameInputOffset + gameInputSize;
         let permanentStorageSize = 4096;
@@ -46,7 +45,7 @@ function main()
         let renderListOffset = bitmapInfosOffset + bitmapInfosSize;
         let renderListSize = 8192;
 
-        const gameMemory = new Uint32Array(memory.buffer, gameMemoryOffset, gameMemorySize);
+        const gameMemory = new Uint32Array(memory.buffer, gameMemoryOffset, gameMemoryLength);
         gameMemory.set([
             permanentStorageOffset,
             permanentStorageSize,
@@ -55,9 +54,10 @@ function main()
             0, // RenderListUsed
         ]);
 
-        const gameInput = new Uint32Array(memory.buffer, gameInputOffset, gameInputSize);
+        const gameInput = new Uint32Array(memory.buffer, gameInputOffset, gameInputLength);
 
         let infosSource = new Uint8Array(atlasBuffer, atlasInfosOffset, bitmapInfosSize);
+        const memoryUint8 = new Uint8Array(memory.buffer);
         memoryUint8.set(infosSource, bitmapInfosOffset);
 
         let screenWidth = 256;
@@ -84,28 +84,37 @@ function main()
 
         const vertexShaderSource = `
             attribute vec2 position;
-            attribute vec2 scale;   // instanced
-            attribute vec2 offset;  // instanced
-            attribute vec2 uvScale;   // instanced
-            attribute vec2 uvOffset;   // instanced
+
+            // Instanced attributes:
+            attribute vec2 scale;
+            attribute vec2 offset;
+            attribute vec2 uvScale;
+            attribute vec2 uvOffset;
+            attribute vec4 color;
+
             uniform mat4 screenToClip;
             varying vec2 uv;
+            varying vec4 vColor;
 
             void main()
             {
                 uv = uvScale*position.xy + uvOffset;
+                vColor = color;
                 gl_Position = screenToClip*vec4(scale*position + offset, 0.0, 1.0);
             }
         `;
 
         const fragmentShaderSource = `
             precision highp float;
+
             varying vec2 uv;
+            varying vec4 vColor;
+
             uniform sampler2D image;
 
             void main()
             {
-                gl_FragColor = texture2D(image, uv);
+                gl_FragColor = texture2D(image, uv) * vColor;
             }
         `;
 
@@ -143,24 +152,9 @@ function main()
 
             let instanceBuffer = gl.createBuffer();
             gl.bindBuffer(gl.ARRAY_BUFFER, instanceBuffer);
-            let instances = new Float32Array([
-                // instance 0
-                32, 32, // scale
-                100, 50, // offset
-                1, 1, // uv scale
-                0, 0, // uv offset
+            gl.bufferData(gl.ARRAY_BUFFER, renderListSize, gl.DYNAMIC_DRAW);
 
-                // instance 1
-                64, 64, // scale
-                0, 0, // offset
-                0.5, 0.5, // uv scale
-                0, 0.5, // uv offset
-                //-0.5, 0.5, // uv scale
-                //0.5, 0.5, // uv offset
-            ]);
-            gl.bufferData(gl.ARRAY_BUFFER, instances, gl.DYNAMIC_DRAW);
-
-            let stride = 8*4;
+            let stride = 12*4;
 
             let scaleLocation = gl.getAttribLocation(program, "scale");
             gl.enableVertexAttribArray(scaleLocation);
@@ -181,6 +175,11 @@ function main()
             gl.enableVertexAttribArray(uvOffsetLocation);
             gl.vertexAttribPointer(uvOffsetLocation, 2, gl.FLOAT, false, stride, 6*4);
             ext.vertexAttribDivisorANGLE(uvOffsetLocation, 1);
+
+            let colorLocation = gl.getAttribLocation(program, "color");
+            gl.enableVertexAttribArray(colorLocation);
+            gl.vertexAttribPointer(colorLocation, 4, gl.FLOAT, false, stride, 8*4);
+            ext.vertexAttribDivisorANGLE(colorLocation, 1);
 
             let screenToClipLocation = gl.getUniformLocation(program, "screenToClip");
             console.assert(screenToClipLocation !== null);
@@ -229,12 +228,102 @@ function main()
 
                 wasmModule.instance.exports.GameUpdateAndRender(gameMemoryOffset, gameInputOffset, bitmapInfosOffset);
 
-                gl.clearColor(0.0, 0.0, 0.3, 1.0);
-                gl.clear(gl.COLOR_BUFFER_BIT);
+                const renderListUsed = gameMemory.at(-1);
+                const view = new DataView(memory.buffer, renderListOffset, renderListUsed);
+                let instanceCount = 0;
+                let instanceData = [];
+                let at = 0
 
-                let vertsPerInstance = 4;
-                let instanceCount = 2;
+                while(at < renderListUsed)
+                {
+                    const id = view.getUint32(at, true);
+                    at += 4;
+                    switch(id)
+                    {
+                        // RenderEntry_Clear,
+                        case 0: {
+                            const r = view.getFloat32(at, true);
+                            at += 4;
+                            const g = view.getFloat32(at, true);
+                            at += 4;
+                            const b = view.getFloat32(at, true);
+                            at += 4;
+                            const a = view.getFloat32(at, true);
+                            at += 4;
+                            gl.clearColor(r, g, b, a);
+                            gl.clear(gl.COLOR_BUFFER_BIT);
+                            break;
+                        }
+                        // RenderEntry_Bitmap,
+                        case 1: {
+                            // s32 DimX, DimY;
+                            const DimX = view.getInt32(at, true);
+                            at += 4;
+                            const DimY = view.getInt32(at, true);
+                            at += 4;
 
+                            // s32 MinX, MinY;
+                            const MinX = view.getInt32(at, true);
+                            at += 4;
+                            const MinY = view.getInt32(at, true);
+                            at += 4;
+
+                            // v2 UVScale;
+                            const UVScaleX = view.getFloat32(at, true);
+                            at += 4;
+                            const UVScaleY = view.getFloat32(at, true);
+                            at += 4;
+
+                            // v2 UVOffset;
+                            const UVOffsetX = view.getFloat32(at, true);
+                            at += 4;
+                            const UVOffsetY = view.getFloat32(at, true);
+                            at += 4;
+
+                            // v4 Color;
+                            const ColorR = view.getFloat32(at, true);
+                            at += 4;
+                            const ColorG = view.getFloat32(at, true);
+                            at += 4;
+                            const ColorB = view.getFloat32(at, true);
+                            at += 4;
+                            const ColorA = view.getFloat32(at, true);
+                            at += 4;
+
+                            instanceData.push(
+                                // attribute vec2 scale;
+                                DimX, DimY,
+                                // attribute vec2 offset;
+                                MinX, MinY,
+                                // attribute vec2 uvScale;
+                                UVScaleX, UVScaleY,
+                                // attribute vec2 uvOffset;
+                                UVOffsetX, UVOffsetY,
+                                // attribute vec4 color;
+                                ColorR, ColorG, ColorB, ColorA,
+                            );
+
+                            ++instanceCount;
+                            break;
+                        }
+                        // RenderEntry_Rect,
+                        case 2: {
+                            // NOTE(slava): We don't support rects in the web layer
+                            break;
+                        }
+                        default: {
+                            console.error(`Unknown render entry ID: ${id}`);
+                            break;
+                        }
+                    }
+                }
+                console.assert(at == renderListUsed);
+
+                gl.bindBuffer(gl.ARRAY_BUFFER, instanceBuffer);
+                const instanceFloat32Array = new Float32Array(instanceData);
+                gl.bufferSubData(gl.ARRAY_BUFFER, 0, instanceFloat32Array);
+
+                const vertsPerInstance = 4;
                 ext.drawArraysInstancedANGLE(gl.TRIANGLE_STRIP, 0, vertsPerInstance, instanceCount);
             }
         }
