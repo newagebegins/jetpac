@@ -53,10 +53,9 @@ PushBitmap(render_group *Group, bitmap_id ID, int32 MinX, int32 MinY,
     render_entry_base *Base = PushStruct(Group->Arena, render_entry_base);
     Base->ID = RenderEntry_Bitmap;
 
-    atlas *Atlas = Group->Atlas;
-    bitmap_info *Info = Atlas->Infos + ID;
-    r32 InvWidth = 1.0f / Group->AtlasBitmap.Width;
-    r32 InvHeight = 1.0f / Group->AtlasBitmap.Height;
+    bitmap_info *Info = Group->BitmapInfos + ID;
+    r32 InvWidth = 1.0f / ATLAS_WIDTH;
+    r32 InvHeight = 1.0f / ATLAS_HEIGHT;
 
     Assert(FrameOffsetX >= 0);
     Assert(FrameOffsetX <= Info->FrameWidth);
@@ -141,7 +140,7 @@ ColorUInt32ToV4(uint32 Color)
 }
 
 internal void
-InitializeRenderGroup(render_group *Group, memory_arena *Arena, atlas *Atlas)
+InitializeRenderGroup(render_group *Group, memory_arena *Arena, bitmap_info *BitmapInfos)
 {
     Group->Arena = Arena;
 
@@ -160,7 +159,5 @@ InitializeRenderGroup(render_group *Group, memory_arena *Arena, atlas *Atlas)
     Group->Palette[Color_BrightCyan] = ColorUInt32ToV4(0x00FFFF);
     Group->Palette[Color_BrightYellow] = ColorUInt32ToV4(0xFFFF00);
 
-    Group->Atlas = Atlas;
-
-    Group->AtlasBitmap = MakeAtlasBitmap(Atlas);
+    Group->BitmapInfos = BitmapInfos;
 }

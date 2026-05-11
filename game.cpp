@@ -366,7 +366,7 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
             if(Player->FrameTimer >= FrameDuration)
             {
                 Player->FrameTimer -= FrameDuration;
-                bitmap_info *Info = GameState->Atlas->Infos + Bitmap_JetmanFlying;
+                bitmap_info *Info = GameState->BitmapInfos + Bitmap_JetmanFlying;
                 Player->FrameIndex = (Player->FrameIndex + 1) % Info->FrameCount;
             }
         }
@@ -834,7 +834,7 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
     // NOTE(slava): Draw rocket and fuel
     //
 
-    bitmap_info *PartInfo = GameState->Atlas->Infos + Bitmap_Part;
+    bitmap_info *PartInfo = GameState->BitmapInfos + Bitmap_Part;
 
     if(World->InstalledPartsCount < 3)
     {
@@ -884,7 +884,7 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
             if(World->FlameFrameTimer >= FlameFrameDuration)
             {
                 World->FlameFrameTimer -= FlameFrameDuration;
-                bitmap_info *Info = GameState->Atlas->Infos + Bitmap_Flame;
+                bitmap_info *Info = GameState->BitmapInfos + Bitmap_Flame;
                 World->FlameFrameIndex = (World->FlameFrameIndex + 1) % Info->FrameCount;
             }
             PushBitmap(RenderGroup, Bitmap_Flame,
@@ -1033,7 +1033,7 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
                     InvalidDefaultCase;
                 }
 
-                bitmap_info *BitmapInfo = GameState->Atlas->Infos + BitmapID;
+                bitmap_info *BitmapInfo = GameState->BitmapInfos + BitmapID;
                 int32 BitmapCount = BitmapInfo->FrameCount;
 
                 Enemy->FrameTimer += Input->dt;
@@ -1070,7 +1070,7 @@ UpdateAndRenderWorld(game_state *GameState, game_input *Input, render_group *Ren
         }
     }
 
-    bitmap_info *ExplosionInfo = GameState->Atlas->Infos + Bitmap_Explosion;
+    bitmap_info *ExplosionInfo = GameState->BitmapInfos + Bitmap_Explosion;
 
     for(int32 ExplosionIndex = 0;
         ExplosionIndex < ArrayCount(World->Explosions);
@@ -1176,7 +1176,7 @@ extern "C" GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
     if(!GameState->IsInitialized)
     {
         GameState->MainArena = MakeArena(GameState + 1, Memory->PermanentStorageSize - sizeof(game_state));
-        GameState->Atlas = Atlas;
+        GameState->BitmapInfos = BitmapInfos;
 
         GameState->WorldArena = SubArena(&GameState->MainArena);
         GameState->World = AllocateWorld(&GameState->WorldArena);
@@ -1200,7 +1200,7 @@ extern "C" GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
 
     memory_arena RenderArena = MakeArena(Memory->RenderList, Memory->RenderListSize);
     render_group RenderGroup;
-    InitializeRenderGroup(&RenderGroup, &RenderArena, GameState->Atlas);
+    InitializeRenderGroup(&RenderGroup, &RenderArena, GameState->BitmapInfos);
     PushClear(&RenderGroup, Color_Black);
 
     switch(GameState->MetaPhase)

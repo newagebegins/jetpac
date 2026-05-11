@@ -26,8 +26,7 @@ struct render_group
 {
     memory_arena *Arena;
     v4 Palette[Color_Count];
-    atlas *Atlas;
-    game_bitmap AtlasBitmap;
+    bitmap_info *BitmapInfos;
 };
 
 #endif

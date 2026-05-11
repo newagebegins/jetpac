@@ -234,7 +234,7 @@ struct game_state
     uint8 Tiles[TILE_COUNT_Y+1][TILE_COUNT_X];
     uint8 TileColors[TILE_COUNT_Y+1][TILE_COUNT_X];
 
-    atlas *Atlas;
+    bitmap_info *BitmapInfos;
 };
 
 struct transient_state

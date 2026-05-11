@@ -124,21 +124,10 @@ struct game_bitmap
     void *Pixels;
 };
 
-inline game_bitmap
-MakeAtlasBitmap(atlas *Atlas)
-{
-    game_bitmap AtlasBitmap = {};
-    AtlasBitmap.Width = ATLAS_WIDTH;
-    AtlasBitmap.Height = ATLAS_HEIGHT;
-    AtlasBitmap.Pitch = ATLAS_PITCH;
-    AtlasBitmap.Pixels = Atlas->Pixels;
-    return(AtlasBitmap);
-}
-
 #define BACKBUFFER_WIDTH 256
 #define BACKBUFFER_HEIGHT 192
 
-#define GAME_UPDATE_AND_RENDER(name) void name(game_memory *Memory, game_input *Input, atlas *Atlas)
+#define GAME_UPDATE_AND_RENDER(name) void name(game_memory *Memory, game_input *Input, bitmap_info *BitmapInfos)
 typedef GAME_UPDATE_AND_RENDER(game_update_and_render);
 
 #endif

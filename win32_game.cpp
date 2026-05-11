@@ -552,7 +552,12 @@ WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, char *CommandLine, int ShowC
     Memory.RenderList = (uint8 *)Memory.PermanentStorage + Memory.PermanentStorageSize;
 
     atlas *Atlas = Win32AllocateAtlas();
-    game_bitmap AtlasBitmap = MakeAtlasBitmap(Atlas);
+
+    game_bitmap AtlasBitmap = {};
+    AtlasBitmap.Width = ATLAS_WIDTH;
+    AtlasBitmap.Height = ATLAS_HEIGHT;
+    AtlasBitmap.Pitch = ATLAS_PITCH;
+    AtlasBitmap.Pixels = Atlas->Pixels;
 
     game_input Inputs[2] = {};
     game_input *OldInput = &Inputs[0];
@@ -710,7 +715,7 @@ WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, char *CommandLine, int ShowC
 
         NewInput->dt = dt;
         Memory.RenderListUsed = 0;
-        Game.UpdateAndRender(&Memory, NewInput, Atlas);
+        Game.UpdateAndRender(&Memory, NewInput, Atlas->Infos);
         Win32OutputRenderList(Memory.RenderList, Memory.RenderListUsed, &AtlasBitmap, (game_bitmap *)Backbuffer);
 
         LARGE_INTEGER FrameEndCounter = Win32GetCounter();
