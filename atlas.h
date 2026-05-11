@@ -1,8 +1,6 @@
 #if !defined(ATLAS_H)
 #define ATLAS_H
 
-#define RIFF_CODE(a, b, c, d) (((u32)(a) << 0) | ((u32)(b) << 8) | ((u32)(c) << 16) | ((u32)(d) << 24))
-
 #pragma pack(push, 1)
 
 enum bitmap_id
@@ -32,22 +30,25 @@ struct bitmap_info
     s32 OffsetY;
 };
 
+struct atlas_header
+{
+    u32 InfosOffset;
+    u32 PixelsOffset;
+};
+
+#pragma pack(pop)
+
 #define ATLAS_WIDTH 512
 #define ATLAS_HEIGHT ATLAS_WIDTH
 #define ATLAS_PITCH (ATLAS_WIDTH*BITMAP_BYTES_PER_PIXEL)
 
+#define ATLAS_INFOS_SIZE (sizeof(bitmap_info)*Bitmap_Count)
+#define ATLAS_PIXELS_SIZE (ATLAS_HEIGHT*ATLAS_PITCH)
+
 struct atlas
 {
-#define ATLAS_MAGIC_VALUE RIFF_CODE('a', 't', 'l', 's')
-    u32 MagicValue;
-
-#define ATLAS_VERSION 0
-    u32 Version;
-
-    bitmap_info Infos[Bitmap_Count];
-    u32 Pixels[ATLAS_WIDTH*ATLAS_HEIGHT];
+    bitmap_info *Infos;
+    void *Pixels;
 };
-
-#pragma pack(pop)
 
 #endif

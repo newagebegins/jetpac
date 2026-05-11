@@ -248,18 +248,6 @@ Win32LoadInput(HANDLE InputRecorderFile, game_input *Input)
 }
 #endif
 
-internal atlas *
-Win32AllocateAtlas()
-{
-    atlas *Atlas = (atlas *)VirtualAlloc(0, sizeof(atlas), MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
-    Assert(Atlas);
-    Atlas = (atlas *)Win32ReadEntireFile("jetpac.atls");
-    Assert(Atlas->MagicValue == ATLAS_MAGIC_VALUE);
-    Assert(Atlas->Version == ATLAS_VERSION);
-
-    return(Atlas);
-}
-
 internal void
 DrawRect(game_bitmap *Bitmap, int32 MinX, int32 MinY, int32 MaxX, int32 MaxY,
          v4 Color = {1.0f, 1.0f, 1.0f, 1.0f})
@@ -429,6 +417,17 @@ Win32OutputRenderList(void *RenderList, u32 UsedSize, game_bitmap *AtlasBitmap, 
     }
 }
 
+internal atlas
+Win32LoadAtlas()
+{
+    atlas Atlas = {};
+    void *Contents = Win32ReadEntireFile("jetpac.atls");
+    atlas_header *Header = (atlas_header *)Contents;
+    Atlas.Infos = (bitmap_info *)((u8 *)Contents + Header->InfosOffset);
+    Atlas.Pixels = (u8 *)Contents + Header->PixelsOffset;
+    return(Atlas);
+}
+
 int APIENTRY
 WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, char *CommandLine, int ShowCmd)
 {
@@ -543,21 +542,21 @@ WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, char *CommandLine, int ShowC
     
     game_memory Memory = {};
 
-    Memory.PermanentStorageSize = Megabytes(8);
-    Memory.RenderListSize = Megabytes(4);
+    Memory.PermanentStorageSize = Kilobytes(4);
+    Memory.RenderListSize = Kilobytes(8);
     memory_index TotalMemorySize = Memory.PermanentStorageSize + Memory.RenderListSize;
 
     Memory.PermanentStorage = VirtualAlloc(BaseAddress, TotalMemorySize, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
     Assert(Memory.PermanentStorage);
     Memory.RenderList = (uint8 *)Memory.PermanentStorage + Memory.PermanentStorageSize;
 
-    atlas *Atlas = Win32AllocateAtlas();
+    atlas Atlas = Win32LoadAtlas();
 
     game_bitmap AtlasBitmap = {};
     AtlasBitmap.Width = ATLAS_WIDTH;
     AtlasBitmap.Height = ATLAS_HEIGHT;
     AtlasBitmap.Pitch = ATLAS_PITCH;
-    AtlasBitmap.Pixels = Atlas->Pixels;
+    AtlasBitmap.Pixels = Atlas.Pixels;
 
     game_input Inputs[2] = {};
     game_input *OldInput = &Inputs[0];
@@ -715,7 +714,7 @@ WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, char *CommandLine, int ShowC
 
         NewInput->dt = dt;
         Memory.RenderListUsed = 0;
-        Game.UpdateAndRender(&Memory, NewInput, Atlas->Infos);
+        Game.UpdateAndRender(&Memory, NewInput, Atlas.Infos);
         Win32OutputRenderList(Memory.RenderList, Memory.RenderListUsed, &AtlasBitmap, (game_bitmap *)Backbuffer);
 
         LARGE_INTEGER FrameEndCounter = Win32GetCounter();

@@ -130,54 +130,56 @@ int main(void)
     game_bitmap FontBitmap;
     game_bitmap LivesBitmap;
 
-    GroundBitmaps[0] = LoadBMP("../assets/ground0.bmp");
-    GroundBitmaps[1] = LoadBMP("../assets/ground1.bmp");
-    GroundBitmaps[2] = LoadBMP("../assets/ground2.bmp");
+    GroundBitmaps[0] = LoadBMP("assets/ground0.bmp");
+    GroundBitmaps[1] = LoadBMP("assets/ground1.bmp");
+    GroundBitmaps[2] = LoadBMP("assets/ground2.bmp");
 
-    JetmanWalkingBitmaps[0] = LoadBMP("../assets/jetman0.bmp");
-    JetmanWalkingBitmaps[1] = LoadBMP("../assets/jetman1.bmp");
-    JetmanWalkingBitmaps[2] = LoadBMP("../assets/jetman2.bmp");
+    JetmanWalkingBitmaps[0] = LoadBMP("assets/jetman0.bmp");
+    JetmanWalkingBitmaps[1] = LoadBMP("assets/jetman1.bmp");
+    JetmanWalkingBitmaps[2] = LoadBMP("assets/jetman2.bmp");
 
-    JetmanFlyingBitmaps[0] = LoadBMP("../assets/jetman3.bmp");
-    JetmanFlyingBitmaps[1] = LoadBMP("../assets/jetman4.bmp");
-    JetmanFlyingBitmaps[2] = LoadBMP("../assets/jetman5.bmp");
+    JetmanFlyingBitmaps[0] = LoadBMP("assets/jetman3.bmp");
+    JetmanFlyingBitmaps[1] = LoadBMP("assets/jetman4.bmp");
+    JetmanFlyingBitmaps[2] = LoadBMP("assets/jetman5.bmp");
 
-    ExplosionBitmaps[0] = LoadBMP("../assets/explosion0.bmp");
-    ExplosionBitmaps[1] = LoadBMP("../assets/explosion1.bmp");
-    ExplosionBitmaps[2] = LoadBMP("../assets/explosion2.bmp");
-    ExplosionBitmaps[3] = LoadBMP("../assets/explosion3.bmp");
-    ExplosionBitmaps[4] = LoadBMP("../assets/explosion4.bmp");
+    ExplosionBitmaps[0] = LoadBMP("assets/explosion0.bmp");
+    ExplosionBitmaps[1] = LoadBMP("assets/explosion1.bmp");
+    ExplosionBitmaps[2] = LoadBMP("assets/explosion2.bmp");
+    ExplosionBitmaps[3] = LoadBMP("assets/explosion3.bmp");
+    ExplosionBitmaps[4] = LoadBMP("assets/explosion4.bmp");
 
-    PartBitmaps[0] = LoadBMP("../assets/part0.bmp");
-    PartBitmaps[1] = LoadBMP("../assets/part1.bmp");
-    PartBitmaps[2] = LoadBMP("../assets/part2.bmp");
-    PartBitmaps[3] = LoadBMP("../assets/part3.bmp");
-    PartBitmaps[4] = LoadBMP("../assets/part4.bmp");
-    PartBitmaps[5] = LoadBMP("../assets/part5.bmp");
+    PartBitmaps[0] = LoadBMP("assets/part0.bmp");
+    PartBitmaps[1] = LoadBMP("assets/part1.bmp");
+    PartBitmaps[2] = LoadBMP("assets/part2.bmp");
+    PartBitmaps[3] = LoadBMP("assets/part3.bmp");
+    PartBitmaps[4] = LoadBMP("assets/part4.bmp");
+    PartBitmaps[5] = LoadBMP("assets/part5.bmp");
 
-    FuelBitmap = LoadBMP("../assets/fuel.bmp");
+    FuelBitmap = LoadBMP("assets/fuel.bmp");
 
-    FlameBitmaps[0] = LoadBMP("../assets/rocket_flame0.bmp");
-    FlameBitmaps[1] = LoadBMP("../assets/rocket_flame1.bmp");
-    FlameBitmaps[2] = LoadBMP("../assets/rocket_flame2.bmp");
+    FlameBitmaps[0] = LoadBMP("assets/rocket_flame0.bmp");
+    FlameBitmaps[1] = LoadBMP("assets/rocket_flame1.bmp");
+    FlameBitmaps[2] = LoadBMP("assets/rocket_flame2.bmp");
 
-    AsteroidBitmaps[0] = LoadBMP("../assets/asteroid0.bmp");
-    AsteroidBitmaps[1] = LoadBMP("../assets/asteroid1.bmp");
-    AsteroidBitmaps[2] = LoadBMP("../assets/asteroid2.bmp");
+    AsteroidBitmaps[0] = LoadBMP("assets/asteroid0.bmp");
+    AsteroidBitmaps[1] = LoadBMP("assets/asteroid1.bmp");
+    AsteroidBitmaps[2] = LoadBMP("assets/asteroid2.bmp");
 
-    LaserBitmap = LoadBMP("../assets/laser.bmp");
-    FontBitmap = LoadBMP("../assets/font.bmp");
-    LivesBitmap = LoadBMP("../assets/lives.bmp");
+    LaserBitmap = LoadBMP("assets/laser.bmp");
+    FontBitmap = LoadBMP("assets/font.bmp");
+    LivesBitmap = LoadBMP("assets/lives.bmp");
 
-    FaceBitmaps[0] = LoadBMP("../assets/face0.bmp");
-    FaceBitmaps[1] = LoadBMP("../assets/face1.bmp");
-    FaceBitmaps[2] = LoadBMP("../assets/face2.bmp");
+    FaceBitmaps[0] = LoadBMP("assets/face0.bmp");
+    FaceBitmaps[1] = LoadBMP("assets/face1.bmp");
+    FaceBitmaps[2] = LoadBMP("assets/face2.bmp");
 
-    atlas *Atlas = (atlas *)malloc(sizeof(atlas));
-    Assert(Atlas);
+    atlas Atlas_ = {};
+    atlas *Atlas = &Atlas_;
+    Atlas->Infos = (bitmap_info *)malloc(ATLAS_INFOS_SIZE);
+    Atlas->Pixels = malloc(ATLAS_PIXELS_SIZE);
+    Assert(Atlas->Infos);
+    Assert(Atlas->Pixels);
 
-    Atlas->MagicValue = ATLAS_MAGIC_VALUE;
-    Atlas->Version = ATLAS_VERSION;
     ZeroStruct(Atlas->Infos[0]);
 
     s32 DestY = 0;
@@ -205,7 +207,20 @@ int main(void)
 
     FILE *File = fopen("jetpac.atls", "wb");
     Assert(File);
-    size_t WrittenCount = fwrite(Atlas, sizeof(atlas), 1, File);
+
+    atlas_header Header = {};
+    Header.InfosOffset = sizeof(Header);
+    Header.PixelsOffset = Header.InfosOffset + ATLAS_INFOS_SIZE;
+
+    size_t WrittenCount;
+
+    WrittenCount = fwrite(&Header, sizeof(Header), 1, File);
+    Assert(WrittenCount == 1);
+
+    WrittenCount = fwrite(Atlas->Infos, ATLAS_INFOS_SIZE, 1, File);
+    Assert(WrittenCount == 1);
+
+    WrittenCount = fwrite(Atlas->Pixels, ATLAS_PIXELS_SIZE, 1, File);
     Assert(WrittenCount == 1);
 
     return(0);
