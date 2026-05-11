@@ -54,8 +54,6 @@ function main()
             0, // RenderListUsed
         ]);
 
-        const gameInput = new Uint32Array(memory.buffer, gameInputOffset, gameInputLength);
-
         let infosSource = new Uint8Array(atlasBuffer, atlasInfosOffset, bitmapInfosSize);
         const memoryUint8 = new Uint8Array(memory.buffer);
         memoryUint8.set(infosSource, bitmapInfosOffset);
@@ -224,6 +222,47 @@ function main()
                 }
 
                 let dt = deltaMs / 1000;
+
+                const gameInputView = new DataView(memory.buffer, gameInputOffset, gameInputSize);
+                let gameInputAt = 0;
+
+                gameInputView.setFloat32(gameInputAt, dt, true);
+                gameInputAt += 4;
+
+                // Left IsDown;
+                gameInputView.setUint32(gameInputAt, 0, true);
+                gameInputAt += 4;
+                // Left JustWentDown;
+                gameInputView.setUint32(gameInputAt, 0, true);
+                gameInputAt += 4;
+
+                // Right IsDown;
+                gameInputView.setUint32(gameInputAt, 0, true);
+                gameInputAt += 4;
+                // Right JustWentDown;
+                gameInputView.setUint32(gameInputAt, 0, true);
+                gameInputAt += 4;
+
+                // Up IsDown;
+                gameInputView.setUint32(gameInputAt, 0, true);
+                gameInputAt += 4;
+                // Up JustWentDown;
+                gameInputView.setUint32(gameInputAt, 0, true);
+                gameInputAt += 4;
+
+                // Down IsDown;
+                gameInputView.setUint32(gameInputAt, 0, true);
+                gameInputAt += 4;
+                // Down JustWentDown;
+                gameInputView.setUint32(gameInputAt, 0, true);
+                gameInputAt += 4;
+
+                // Action IsDown;
+                gameInputView.setUint32(gameInputAt, 0, true);
+                gameInputAt += 4;
+                // Action JustWentDown;
+                gameInputView.setUint32(gameInputAt, 0, true);
+                gameInputAt += 4;
 
                 wasmModule.instance.exports.GameUpdateAndRender(gameMemoryOffset, gameInputOffset, bitmapInfosOffset);
 
