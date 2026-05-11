@@ -209,6 +209,10 @@ int main(void)
     Assert(File);
 
     atlas_header Header = {};
+    Header.Width = ATLAS_WIDTH;
+    Header.Height = ATLAS_HEIGHT;
+    Header.InfosSize = ATLAS_INFOS_SIZE;
+    Header.PixelsSize = ATLAS_PIXELS_SIZE;
     Header.InfosOffset = sizeof(Header);
     Header.PixelsOffset = Header.InfosOffset + ATLAS_INFOS_SIZE;
 

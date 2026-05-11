@@ -32,6 +32,10 @@ struct bitmap_info
 
 struct atlas_header
 {
+    u32 Width;
+    u32 Height;
+    u32 InfosSize;
+    u32 PixelsSize;
     u32 InfosOffset;
     u32 PixelsOffset;
 };
