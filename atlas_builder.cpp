@@ -130,48 +130,48 @@ int main(void)
     game_bitmap FontBitmap;
     game_bitmap LivesBitmap;
 
-    GroundBitmaps[0] = LoadBMP("ground0.bmp");
-    GroundBitmaps[1] = LoadBMP("ground1.bmp");
-    GroundBitmaps[2] = LoadBMP("ground2.bmp");
+    GroundBitmaps[0] = LoadBMP("../assets/ground0.bmp");
+    GroundBitmaps[1] = LoadBMP("../assets/ground1.bmp");
+    GroundBitmaps[2] = LoadBMP("../assets/ground2.bmp");
 
-    JetmanWalkingBitmaps[0] = LoadBMP("jetman0.bmp");
-    JetmanWalkingBitmaps[1] = LoadBMP("jetman1.bmp");
-    JetmanWalkingBitmaps[2] = LoadBMP("jetman2.bmp");
+    JetmanWalkingBitmaps[0] = LoadBMP("../assets/jetman0.bmp");
+    JetmanWalkingBitmaps[1] = LoadBMP("../assets/jetman1.bmp");
+    JetmanWalkingBitmaps[2] = LoadBMP("../assets/jetman2.bmp");
 
-    JetmanFlyingBitmaps[0] = LoadBMP("jetman3.bmp");
-    JetmanFlyingBitmaps[1] = LoadBMP("jetman4.bmp");
-    JetmanFlyingBitmaps[2] = LoadBMP("jetman5.bmp");
+    JetmanFlyingBitmaps[0] = LoadBMP("../assets/jetman3.bmp");
+    JetmanFlyingBitmaps[1] = LoadBMP("../assets/jetman4.bmp");
+    JetmanFlyingBitmaps[2] = LoadBMP("../assets/jetman5.bmp");
 
-    ExplosionBitmaps[0] = LoadBMP("explosion0.bmp");
-    ExplosionBitmaps[1] = LoadBMP("explosion1.bmp");
-    ExplosionBitmaps[2] = LoadBMP("explosion2.bmp");
-    ExplosionBitmaps[3] = LoadBMP("explosion3.bmp");
-    ExplosionBitmaps[4] = LoadBMP("explosion4.bmp");
+    ExplosionBitmaps[0] = LoadBMP("../assets/explosion0.bmp");
+    ExplosionBitmaps[1] = LoadBMP("../assets/explosion1.bmp");
+    ExplosionBitmaps[2] = LoadBMP("../assets/explosion2.bmp");
+    ExplosionBitmaps[3] = LoadBMP("../assets/explosion3.bmp");
+    ExplosionBitmaps[4] = LoadBMP("../assets/explosion4.bmp");
 
-    PartBitmaps[0] = LoadBMP("part0.bmp");
-    PartBitmaps[1] = LoadBMP("part1.bmp");
-    PartBitmaps[2] = LoadBMP("part2.bmp");
-    PartBitmaps[3] = LoadBMP("part3.bmp");
-    PartBitmaps[4] = LoadBMP("part4.bmp");
-    PartBitmaps[5] = LoadBMP("part5.bmp");
+    PartBitmaps[0] = LoadBMP("../assets/part0.bmp");
+    PartBitmaps[1] = LoadBMP("../assets/part1.bmp");
+    PartBitmaps[2] = LoadBMP("../assets/part2.bmp");
+    PartBitmaps[3] = LoadBMP("../assets/part3.bmp");
+    PartBitmaps[4] = LoadBMP("../assets/part4.bmp");
+    PartBitmaps[5] = LoadBMP("../assets/part5.bmp");
 
-    FuelBitmap = LoadBMP("fuel.bmp");
+    FuelBitmap = LoadBMP("../assets/fuel.bmp");
 
-    FlameBitmaps[0] = LoadBMP("rocket_flame0.bmp");
-    FlameBitmaps[1] = LoadBMP("rocket_flame1.bmp");
-    FlameBitmaps[2] = LoadBMP("rocket_flame2.bmp");
+    FlameBitmaps[0] = LoadBMP("../assets/rocket_flame0.bmp");
+    FlameBitmaps[1] = LoadBMP("../assets/rocket_flame1.bmp");
+    FlameBitmaps[2] = LoadBMP("../assets/rocket_flame2.bmp");
 
-    AsteroidBitmaps[0] = LoadBMP("asteroid0.bmp");
-    AsteroidBitmaps[1] = LoadBMP("asteroid1.bmp");
-    AsteroidBitmaps[2] = LoadBMP("asteroid2.bmp");
+    AsteroidBitmaps[0] = LoadBMP("../assets/asteroid0.bmp");
+    AsteroidBitmaps[1] = LoadBMP("../assets/asteroid1.bmp");
+    AsteroidBitmaps[2] = LoadBMP("../assets/asteroid2.bmp");
 
-    LaserBitmap = LoadBMP("laser.bmp");
-    FontBitmap = LoadBMP("font.bmp");
-    LivesBitmap = LoadBMP("lives.bmp");
+    LaserBitmap = LoadBMP("../assets/laser.bmp");
+    FontBitmap = LoadBMP("../assets/font.bmp");
+    LivesBitmap = LoadBMP("../assets/lives.bmp");
 
-    FaceBitmaps[0] = LoadBMP("face0.bmp");
-    FaceBitmaps[1] = LoadBMP("face1.bmp");
-    FaceBitmaps[2] = LoadBMP("face2.bmp");
+    FaceBitmaps[0] = LoadBMP("../assets/face0.bmp");
+    FaceBitmaps[1] = LoadBMP("../assets/face1.bmp");
+    FaceBitmaps[2] = LoadBMP("../assets/face2.bmp");
 
     atlas *Atlas = (atlas *)malloc(sizeof(atlas));
     Assert(Atlas);
