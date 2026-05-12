@@ -203,6 +203,72 @@ function main()
             gl.enable(gl.BLEND);
             gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
+            const gameInputView = new DataView(memory.buffer, gameInputOffset, gameInputSize);
+
+            let gameInputAt = 0
+            const dtOffset = gameInputAt;
+            gameInputAt += 4;
+            const leftIsDownOffset = gameInputAt;
+            gameInputAt += 4;
+            const leftJustWentDownOffset = gameInputAt;
+            gameInputAt += 4;
+            const rightIsDownOffset = gameInputAt;
+            gameInputAt += 4;
+            const rightJustWentDownOffset = gameInputAt;
+            gameInputAt += 4;
+            const upIsDownOffset = gameInputAt;
+            gameInputAt += 4;
+            const upJustWentDownOffset = gameInputAt;
+            gameInputAt += 4;
+            const downIsDownOffset = gameInputAt;
+            gameInputAt += 4;
+            const downJustWentDownOffset = gameInputAt;
+            gameInputAt += 4;
+            const actionIsDownOffset = gameInputAt;
+            gameInputAt += 4;
+            const actionJustWentDownOffset = gameInputAt;
+            gameInputAt += 4;
+
+            const buttons = {
+                'KeyA': {
+                    isDownOffset: leftIsDownOffset,
+                    justWentDownOffset: leftJustWentDownOffset,
+                },
+                'KeyD': {
+                    isDownOffset: rightIsDownOffset,
+                    justWentDownOffset: rightJustWentDownOffset,
+                },
+                'KeyW': {
+                    isDownOffset: upIsDownOffset,
+                    justWentDownOffset: upJustWentDownOffset,
+                },
+                'KeyS': {
+                    isDownOffset: downIsDownOffset,
+                    justWentDownOffset: downJustWentDownOffset,
+                },
+                'Space': {
+                    isDownOffset: actionIsDownOffset,
+                    justWentDownOffset: actionJustWentDownOffset,
+                },
+            };
+
+            window.addEventListener('keydown', (e) => {
+                if (Object.hasOwn(buttons, e.code)) {
+                    e.preventDefault();
+                    if (gameInputView.getUint32(buttons[e.code].isDownOffset, true) == 0) {
+                        gameInputView.setUint32(buttons[e.code].justWentDownOffset, 1, true);
+                    }
+                    gameInputView.setUint32(buttons[e.code].isDownOffset, 1, true);
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                if (Object.hasOwn(buttons, e.code)) {
+                    e.preventDefault();
+                    gameInputView.setUint32(buttons[e.code].isDownOffset, 0, true);
+                }
+            });
+
             lastTimeMs = performance.now();
             mainLoop(lastTimeMs);
 
@@ -223,48 +289,13 @@ function main()
 
                 let dt = deltaMs / 1000;
 
-                const gameInputView = new DataView(memory.buffer, gameInputOffset, gameInputSize);
-                let gameInputAt = 0;
-
-                gameInputView.setFloat32(gameInputAt, dt, true);
-                gameInputAt += 4;
-
-                // Left IsDown;
-                gameInputView.setUint32(gameInputAt, 0, true);
-                gameInputAt += 4;
-                // Left JustWentDown;
-                gameInputView.setUint32(gameInputAt, 0, true);
-                gameInputAt += 4;
-
-                // Right IsDown;
-                gameInputView.setUint32(gameInputAt, 0, true);
-                gameInputAt += 4;
-                // Right JustWentDown;
-                gameInputView.setUint32(gameInputAt, 0, true);
-                gameInputAt += 4;
-
-                // Up IsDown;
-                gameInputView.setUint32(gameInputAt, 0, true);
-                gameInputAt += 4;
-                // Up JustWentDown;
-                gameInputView.setUint32(gameInputAt, 0, true);
-                gameInputAt += 4;
-
-                // Down IsDown;
-                gameInputView.setUint32(gameInputAt, 0, true);
-                gameInputAt += 4;
-                // Down JustWentDown;
-                gameInputView.setUint32(gameInputAt, 0, true);
-                gameInputAt += 4;
-
-                // Action IsDown;
-                gameInputView.setUint32(gameInputAt, 0, true);
-                gameInputAt += 4;
-                // Action JustWentDown;
-                gameInputView.setUint32(gameInputAt, 0, true);
-                gameInputAt += 4;
+                gameInputView.setFloat32(dtOffset, dt, true);
 
                 wasmModule.instance.exports.GameUpdateAndRender(gameMemoryOffset, gameInputOffset, bitmapInfosOffset);
+
+                Object.values(buttons).forEach(({ justWentDownOffset }) => {
+                    gameInputView.setUint32(justWentDownOffset, 0, true);
+                });
 
                 const renderListUsed = gameMemory.at(-1);
                 const view = new DataView(memory.buffer, renderListOffset, renderListUsed);
