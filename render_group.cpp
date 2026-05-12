@@ -76,7 +76,7 @@ PushBitmap(render_group *Group, bitmap_id ID, int32 MinX, int32 MinY,
 
     if(MirrorX)
     {
-        OffsetX = (FrameIndex + 1)*Info->FrameWidth - 1 - FrameOffsetX;
+        OffsetX = (FrameIndex + 1)*Info->FrameWidth - FrameOffsetX;
         UVScale.x = -UVScale.x;
     }
     else

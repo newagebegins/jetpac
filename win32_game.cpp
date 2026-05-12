@@ -305,6 +305,10 @@ DrawBitmap(game_bitmap *Output, game_bitmap *Bitmap, int32 MinX, int32 MinY,
     int32 ClipMaxY = Output->Height;
 
     s32 SourceStartX = FloorReal32ToInt32(UVOffset.x*(r32)Bitmap->Width);
+    if(UVScale.x < 0.0f)
+    {
+        --SourceStartX;
+    }
     s32 SourceStartY = FloorReal32ToInt32(UVOffset.y*(r32)Bitmap->Height);
     s32 SourceAdvanceX = (s32)SignOf(UVScale.x);
     s32 SourceAdvanceY = (s32)SignOf(UVScale.y);

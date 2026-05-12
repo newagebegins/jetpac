@@ -60,7 +60,7 @@ function main()
 
         let screenWidth = 256;
         let screenHeight = 192;
-        let screenScale = 2;
+        let screenScale = 3;
 
         let canvas = document.getElementById("game-canvas");
         canvas.width = screenWidth*screenScale;
@@ -96,7 +96,7 @@ function main()
 
             void main()
             {
-                uv = uvScale*position.xy + uvOffset;
+                uv = uvScale*position + uvOffset;
                 vColor = color;
                 gl_Position = screenToClip*vec4(scale*position + offset, 0.0, 1.0);
             }
