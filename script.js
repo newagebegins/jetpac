@@ -22,14 +22,14 @@ function main()
         
         const pixels = new Uint8Array(atlasBuffer, atlasPixelsOffset, atlasPixelsSize);
 
-        // Memory map:
-        // struct game_memory (20)
-        // struct game_input (44)
+        // Memory map (starting at __heap_base):
+        // struct game_memory (20 bytes)
+        // struct game_input (44 bytes)
         // permanentStorage (permanentStorageSize)
         // bitmap_info (bitmapInfosSize)
         // renderList (renderListSize)
 
-        const gameMemoryOffset = 65536;
+        const gameMemoryOffset = wasmModule.instance.exports.__heap_base;
         const gameMemoryLength = 5;
         const gameMemorySize = gameMemoryLength*Uint32Array.BYTES_PER_ELEMENT;
 
