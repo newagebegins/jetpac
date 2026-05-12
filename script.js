@@ -29,7 +29,7 @@ function main()
         // bitmap_info (bitmapInfosSize)
         // renderList (renderListSize)
 
-        const gameMemoryOffset = 0;
+        const gameMemoryOffset = 65536;
         const gameMemoryLength = 5;
         const gameMemorySize = gameMemoryLength*Uint32Array.BYTES_PER_ELEMENT;
 
