@@ -5,7 +5,7 @@ let frameTimeElement = document.getElementById("frame-time");
 
 function main()
 {
-    const memory = new WebAssembly.Memory({ initial: 30 });
+    const memory = new WebAssembly.Memory({ initial: 2 });
 
     Promise.all([
         WebAssembly.instantiateStreaming(fetch("game.wasm"), { env: { memory } }),
