@@ -42,7 +42,7 @@ struct atlas_header
 
 #pragma pack(pop)
 
-#define ATLAS_WIDTH 512
+#define ATLAS_WIDTH 256
 #define ATLAS_HEIGHT ATLAS_WIDTH
 #define ATLAS_PITCH (ATLAS_WIDTH*BITMAP_BYTES_PER_PIXEL)
 

@@ -84,6 +84,12 @@ PushBitmap(render_group *Group, bitmap_id ID, int32 MinX, int32 MinY,
         OffsetX = FrameIndex*Info->FrameWidth + FrameOffsetX;
     }
 
+    while(OffsetX >= ATLAS_WIDTH)
+    {
+        OffsetX -= ATLAS_WIDTH;
+        OffsetY += Info->FrameHeight;
+    }
+
     v2 UVOffset = {(r32)OffsetX*InvWidth,
                    (r32)OffsetY*InvHeight};
 

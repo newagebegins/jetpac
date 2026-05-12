@@ -91,13 +91,16 @@ CopyBitmap(atlas *Atlas, game_bitmap *Bitmap, s32 DestX, s32 DestY)
 }
 
 inline void
-CopyBitmaps(atlas *Atlas, bitmap_id ID, game_bitmap *Bitmaps, s32 BitmapCount, s32 *DestY, s32 FrameWidth = 0)
+CopyBitmaps(atlas *Atlas, bitmap_id ID, game_bitmap *Bitmaps, s32 BitmapCount, s32 *DestY, s32 FrameWidth = 0, s32 FrameHeight = 0)
 {
     bitmap_info *Info = Atlas->Infos + ID;
-    Info->FrameCount = BitmapCount;
     Info->FrameWidth = FrameWidth ? FrameWidth : Bitmaps[0].Width;
-    Info->FrameHeight = Bitmaps[0].Height;
+    Info->FrameHeight = FrameHeight ? FrameHeight : Bitmaps[0].Height;
     Info->OffsetY = *DestY;
+
+    u32 FrameCountX = (BitmapCount * Bitmaps[0].Width) / Info->FrameWidth;
+    u32 FrameCountY = Bitmaps[0].Height / Info->FrameHeight;
+    Info->FrameCount = FrameCountX * FrameCountY;
 
     for(s32 BitmapIndex = 0;
         BitmapIndex < BitmapCount;
@@ -110,7 +113,7 @@ CopyBitmaps(atlas *Atlas, bitmap_id ID, game_bitmap *Bitmaps, s32 BitmapCount, s
     *DestY += Info->FrameHeight;
 }
 
-#if 0
+#if OUTPUT_BMP
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 #endif
@@ -195,12 +198,12 @@ int main(void)
 
     CopyBitmaps(Atlas, Bitmap_Laser, &LaserBitmap, 1, &DestY);
     CopyBitmaps(Atlas, Bitmap_Fuel, &FuelBitmap, 1, &DestY);
-    CopyBitmaps(Atlas, Bitmap_Font, &FontBitmap, 1, &DestY, 8);
+    CopyBitmaps(Atlas, Bitmap_Font, &FontBitmap, 1, &DestY, 8, 8);
     CopyBitmaps(Atlas, Bitmap_Lives, &LivesBitmap, 1, &DestY);
 
     Assert(DestY <= ATLAS_HEIGHT);
 
-#if 0
+#if OUTPUT_BMP
     stbi_flip_vertically_on_write(1); 
     stbi_write_bmp("atlas.bmp", ATLAS_WIDTH, ATLAS_HEIGHT, 4, Atlas->Pixels);
 #endif
