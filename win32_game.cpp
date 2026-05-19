@@ -524,7 +524,7 @@ WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, char *CommandLine, int ShowC
     RECT WindowRect = {0, 0, BackbufferScale*Backbuffer->Width, BackbufferScale*Backbuffer->Height};
     AdjustWindowRect(&WindowRect, WindowStyle, false);
 
-    HWND Window = CreateWindowExA(0, WindowClass.lpszClassName, "My Game",
+    HWND Window = CreateWindowExA(0, WindowClass.lpszClassName, "Handmade Jetpac",
                                   WindowStyle,
                                   CW_USEDEFAULT,
                                   CW_USEDEFAULT,
