@@ -88,6 +88,7 @@ struct game_memory
     void *RenderList;
     u32 RenderListSize;
     u32 RenderListUsed;
+    u32 RenderListBitmapCount;
 };
 
 struct game_button

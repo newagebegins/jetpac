@@ -23,14 +23,14 @@ function main()
         const pixels = new Uint8Array(atlasBuffer, atlasPixelsOffset, atlasPixelsSize);
 
         // Memory map (starting at __heap_base):
-        // struct game_memory (20 bytes)
-        // struct game_input (44 bytes)
+        // struct game_memory
+        // struct game_input
         // permanentStorage (permanentStorageSize)
         // bitmap_info (bitmapInfosSize)
         // renderList (renderListSize)
 
         const gameMemoryOffset = wasmModule.instance.exports.__heap_base;
-        const gameMemoryLength = 5;
+        const gameMemoryLength = 6;
         const gameMemorySize = gameMemoryLength*Uint32Array.BYTES_PER_ELEMENT;
 
         const gameInputOffset = gameMemoryOffset + gameMemorySize;
@@ -45,6 +45,9 @@ function main()
         let renderListOffset = bitmapInfosOffset + bitmapInfosSize;
         let renderListSize = 8192;
 
+        const renderListUsedIndex = 4;
+        const renderListBitmapCountIndex = 5;
+
         const gameMemory = new Uint32Array(memory.buffer, gameMemoryOffset, gameMemoryLength);
         gameMemory.set([
             permanentStorageOffset,
@@ -52,6 +55,7 @@ function main()
             renderListOffset,
             renderListSize,
             0, // RenderListUsed
+            0, // RenderListBitmapCount
         ]);
 
         let infosSource = new Uint8Array(atlasBuffer, atlasInfosOffset, bitmapInfosSize);
@@ -297,11 +301,13 @@ function main()
                     gameInputView.setUint32(justWentDownOffset, 0, true);
                 });
 
-                const renderListUsed = gameMemory.at(-1);
+                const renderListUsed = gameMemory.at(renderListUsedIndex);
                 const view = new DataView(memory.buffer, renderListOffset, renderListUsed);
-                let instanceCount = 0;
-                let instanceData = [];
-                let at = 0
+                const instanceCount = gameMemory.at(renderListBitmapCountIndex);
+                const floatsPerInstance = 12; // see struct render_entry_bitmap
+                const instanceData = new Float32Array(instanceCount * floatsPerInstance);
+                let at = 0;
+                let instanceDataAt = 0;
 
                 while(at < renderListUsed)
                 {
@@ -325,54 +331,9 @@ function main()
                         }
                         // RenderEntry_Bitmap,
                         case 1: {
-                            // s32 DimX, DimY;
-                            const DimX = view.getInt32(at, true);
-                            at += 4;
-                            const DimY = view.getInt32(at, true);
-                            at += 4;
-
-                            // s32 MinX, MinY;
-                            const MinX = view.getInt32(at, true);
-                            at += 4;
-                            const MinY = view.getInt32(at, true);
-                            at += 4;
-
-                            // v2 UVScale;
-                            const UVScaleX = view.getFloat32(at, true);
-                            at += 4;
-                            const UVScaleY = view.getFloat32(at, true);
-                            at += 4;
-
-                            // v2 UVOffset;
-                            const UVOffsetX = view.getFloat32(at, true);
-                            at += 4;
-                            const UVOffsetY = view.getFloat32(at, true);
-                            at += 4;
-
-                            // v4 Color;
-                            const ColorR = view.getFloat32(at, true);
-                            at += 4;
-                            const ColorG = view.getFloat32(at, true);
-                            at += 4;
-                            const ColorB = view.getFloat32(at, true);
-                            at += 4;
-                            const ColorA = view.getFloat32(at, true);
-                            at += 4;
-
-                            instanceData.push(
-                                // attribute vec2 scale;
-                                DimX, DimY,
-                                // attribute vec2 offset;
-                                MinX, MinY,
-                                // attribute vec2 uvScale;
-                                UVScaleX, UVScaleY,
-                                // attribute vec2 uvOffset;
-                                UVOffsetX, UVOffsetY,
-                                // attribute vec4 color;
-                                ColorR, ColorG, ColorB, ColorA,
-                            );
-
-                            ++instanceCount;
+                            instanceData.set(new Float32Array(memory.buffer, renderListOffset + at, floatsPerInstance), instanceDataAt);
+                            at += floatsPerInstance * Float32Array.BYTES_PER_ELEMENT;
+                            instanceDataAt += floatsPerInstance;
                             break;
                         }
                         // RenderEntry_Rect,
@@ -389,8 +350,7 @@ function main()
                 console.assert(at == renderListUsed);
 
                 gl.bindBuffer(gl.ARRAY_BUFFER, instanceBuffer);
-                const instanceFloat32Array = new Float32Array(instanceData);
-                gl.bufferSubData(gl.ARRAY_BUFFER, 0, instanceFloat32Array);
+                gl.bufferSubData(gl.ARRAY_BUFFER, 0, instanceData);
 
                 const vertsPerInstance = 4;
                 ext.drawArraysInstancedANGLE(gl.TRIANGLE_STRIP, 0, vertsPerInstance, instanceCount);

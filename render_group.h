@@ -27,6 +27,7 @@ struct render_group
     memory_arena *Arena;
     v4 Palette[Color_Count];
     bitmap_info *BitmapInfos;
+    u32 BitmapCount;
 };
 
 #endif

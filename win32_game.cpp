@@ -292,26 +292,26 @@ DrawRect(game_bitmap *Bitmap, int32 MinX, int32 MinY, int32 MaxX, int32 MaxY,
 }
 
 internal void
-DrawBitmap(game_bitmap *Output, game_bitmap *Bitmap, int32 MinX, int32 MinY,
-           v4 Color = {1.0f, 1.0f, 1.0f, 1.0f},
-           v2 UVOffset = {0.0f, 0.0f}, v2 UVScale = {1.0f, 1.0f})
+DrawBitmap(game_bitmap *Output, game_bitmap *Bitmap, render_entry_bitmap *Entry)
 {
-    int32 MaxX = MinX + FloorReal32ToInt32(AbsoluteValue(UVScale.x)*(r32)Bitmap->Width);
-    int32 MaxY = MinY + FloorReal32ToInt32(UVScale.y*(r32)Bitmap->Height);
+    int32 MinX = FloorReal32ToInt32(Entry->Offset.x);
+    int32 MinY = FloorReal32ToInt32(Entry->Offset.y);
+    int32 MaxX = MinX + FloorReal32ToInt32(Entry->Scale.x);
+    int32 MaxY = MinY + FloorReal32ToInt32(Entry->Scale.y);
 
     int32 ClipMinX = 0;
     int32 ClipMaxX = Output->Width;
     int32 ClipMinY = 0;
     int32 ClipMaxY = Output->Height;
 
-    s32 SourceStartX = FloorReal32ToInt32(UVOffset.x*(r32)Bitmap->Width);
-    if(UVScale.x < 0.0f)
+    s32 SourceStartX = FloorReal32ToInt32(Entry->UVOffset.x*(r32)Bitmap->Width);
+    if(Entry->UVScale.x < 0.0f)
     {
         --SourceStartX;
     }
-    s32 SourceStartY = FloorReal32ToInt32(UVOffset.y*(r32)Bitmap->Height);
-    s32 SourceAdvanceX = (s32)SignOf(UVScale.x);
-    s32 SourceAdvanceY = (s32)SignOf(UVScale.y);
+    s32 SourceStartY = FloorReal32ToInt32(Entry->UVOffset.y*(r32)Bitmap->Height);
+    s32 SourceAdvanceX = (s32)SignOf(Entry->UVScale.x);
+    s32 SourceAdvanceY = (s32)SignOf(Entry->UVScale.y);
 
     if(MinX < ClipMinX)
     {
@@ -367,9 +367,9 @@ DrawBitmap(game_bitmap *Output, game_bitmap *Bitmap, int32 MinX, int32 MinY,
             real32 SR = (real32)((Source32 >> 16) & 0xFF) * Inv255;
             uint32 SA = (Source32 >> 24) & 0xFF;
 
-            SR *= Color.r;
-            SG *= Color.g;
-            SB *= Color.b;
+            SR *= Entry->Color.r;
+            SG *= Entry->Color.g;
+            SB *= Entry->Color.b;
 
             if(SA)
             {
@@ -412,7 +412,7 @@ Win32OutputRenderList(void *RenderList, u32 UsedSize, game_bitmap *AtlasBitmap, 
             case RenderEntry_Bitmap:
             {
                 render_entry_bitmap *Entry = (render_entry_bitmap *)(Base + 1);
-                DrawBitmap(OutputBitmap, AtlasBitmap, Entry->MinX, Entry->MinY, Entry->Color, Entry->UVOffset, Entry->UVScale);
+                DrawBitmap(OutputBitmap, AtlasBitmap, Entry);
                 Base = (render_entry_base *)(Entry + 1);
             } break;
 

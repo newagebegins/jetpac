@@ -50,6 +50,8 @@ PushBitmap(render_group *Group, bitmap_id ID, int32 MinX, int32 MinY,
            u32 FrameIndex = 0, bool32 MirrorX = false, color Color = Color_White,
            bool32 WrapX = true, s32 FrameOffsetX = 0, s32 VisibleWidthArg = -1)
 {
+    ++Group->BitmapCount;
+
     render_entry_base *Base = PushStruct(Group->Arena, render_entry_base);
     Base->ID = RenderEntry_Bitmap;
 
@@ -94,10 +96,8 @@ PushBitmap(render_group *Group, bitmap_id ID, int32 MinX, int32 MinY,
                    (r32)OffsetY*InvHeight};
 
     render_entry_bitmap *Entry = PushStruct(Group->Arena, render_entry_bitmap);
-    Entry->DimX = VisibleWidth;
-    Entry->DimY = Info->FrameHeight;
-    Entry->MinX = MinX;
-    Entry->MinY = MinY;
+    Entry->Scale = V2i(VisibleWidth, Info->FrameHeight);
+    Entry->Offset = V2i(MinX, MinY);
     Entry->Color = Group->Palette[Color];
     Entry->UVOffset = UVOffset;
     Entry->UVScale = UVScale;
@@ -166,4 +166,5 @@ InitializeRenderGroup(render_group *Group, memory_arena *Arena, bitmap_info *Bit
     Group->Palette[Color_BrightYellow] = ColorUInt32ToV4(0xFFFF00);
 
     Group->BitmapInfos = BitmapInfos;
+    Group->BitmapCount = 0;
 }

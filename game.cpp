@@ -1236,4 +1236,5 @@ extern "C" GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
     PushString(&RenderGroup, ScoreBuffer, 1*TILE_SIZE, (TILE_COUNT_Y+0)*TILE_SIZE, Color_BrightYellow);
 
     Memory->RenderListUsed = (u32)RenderArena.Used;
+    Memory->RenderListBitmapCount = RenderGroup.BitmapCount;
 }
