@@ -64,11 +64,10 @@ function main()
 
         let screenWidth = 256;
         let screenHeight = 192;
-        let screenScale = 3;
 
         let canvas = document.getElementById("game-canvas");
-        canvas.width = screenWidth*screenScale;
-        canvas.height = screenHeight*screenScale;
+        canvas.width = screenWidth;
+        canvas.height = screenHeight;
 
         gl = canvas.getContext("webgl");
         if(!gl)

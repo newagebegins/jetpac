@@ -1,5 +1,20 @@
+body {
+    margin: 0;
+    background-color: black;
+    color: white;
+}
+
 .main {
-    width: fit-content;
+    margin: 0 auto;
+    max-height: 100vh;
+    max-width: 133.33vh;
+    display: flex;
+    flex-direction: column;
+}
+
+canvas {
+    image-rendering: pixelated;
+    min-height: 0;
 }
 
 .bottom {
