@@ -1,10 +1,6 @@
-let gl;
-let ext;
-let lastTimeMs;
-let frameTimeElement = document.getElementById("frame-time");
-
 function main()
 {
+    const frameTimeElement = document.getElementById("frame-time");
     const memory = new WebAssembly.Memory({ initial: 2 });
 
     Promise.all([
@@ -69,14 +65,14 @@ function main()
         canvas.width = screenWidth;
         canvas.height = screenHeight;
 
-        gl = canvas.getContext("webgl");
+        const gl = canvas.getContext("webgl");
         if(!gl)
         {
             alert("ERROR: WebGL is not supported in your browser");
             return;
         }
 
-        ext = gl.getExtension('ANGLE_instanced_arrays');
+        const ext = gl.getExtension('ANGLE_instanced_arrays');
         if(!ext)
         {
             alert('ANGLE_instanced_arrays is not supported');
@@ -272,7 +268,7 @@ function main()
                 }
             });
 
-            lastTimeMs = performance.now();
+            let lastTimeMs = performance.now();
             mainLoop(lastTimeMs);
 
             function mainLoop(currentTimeMs)
