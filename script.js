@@ -251,22 +251,87 @@ function main()
                 },
             };
 
+            function pressKey(keyCode)
+            {
+                if (gameInputView.getUint32(buttons[keyCode].isDownOffset, true) == 0) {
+                    gameInputView.setUint32(buttons[keyCode].justWentDownOffset, 1, true);
+                }
+                gameInputView.setUint32(buttons[keyCode].isDownOffset, 1, true);
+            }
+
+            function releaseKey(keyCode)
+            {
+                gameInputView.setUint32(buttons[keyCode].isDownOffset, 0, true);
+            }
+
             window.addEventListener('keydown', (e) => {
                 if (Object.hasOwn(buttons, e.code)) {
                     e.preventDefault();
-                    if (gameInputView.getUint32(buttons[e.code].isDownOffset, true) == 0) {
-                        gameInputView.setUint32(buttons[e.code].justWentDownOffset, 1, true);
-                    }
-                    gameInputView.setUint32(buttons[e.code].isDownOffset, 1, true);
+                    pressKey(e.code);
                 }
             });
 
             window.addEventListener('keyup', (e) => {
                 if (Object.hasOwn(buttons, e.code)) {
                     e.preventDefault();
-                    gameInputView.setUint32(buttons[e.code].isDownOffset, 0, true);
+                    releaseKey(e.code);
                 }
             });
+
+            const touchButtons = [
+                {
+                    el: document.getElementById('action'),
+                    key: 'Space',
+                },
+                {
+                    el: document.getElementById('left'),
+                    key: 'KeyA',
+                },
+                {
+                    el: document.getElementById('right'),
+                    key: 'KeyD',
+                },
+                {
+                    el: document.getElementById('up'),
+                    key: 'KeyW',
+                },
+            ];
+
+            function onTouchEvent(event)
+            {
+                event.preventDefault();
+                for (const touchButton of touchButtons)
+                {
+                    let isDown = false;
+                    for (const touch of event.touches)
+                    {
+                        const els = document.elementsFromPoint(touch.clientX, touch.clientY);
+                        for (const el of els)
+                        {
+                            if (el == touchButton.el)
+                            {
+                                isDown = true;
+                            }
+                        }
+                    }
+                    if(isDown)
+                    {
+                        touchButton.el.classList.add('pressed');
+                        pressKey(touchButton.key);
+                    }
+                    else
+                    {
+                        touchButton.el.classList.remove('pressed');
+                        releaseKey(touchButton.key);
+                    }
+                }
+            }
+
+            const touchEventsTarget = document.getElementById('touch-controls');
+            touchEventsTarget.addEventListener('touchstart', onTouchEvent, {passive: false});
+            touchEventsTarget.addEventListener('touchmove', onTouchEvent, {passive: false});
+            touchEventsTarget.addEventListener('touchend', onTouchEvent, {passive: false});
+            touchEventsTarget.addEventListener('touchcancel', onTouchEvent, {passive: false});
 
             let lastTimeMs = performance.now();
             mainLoop(lastTimeMs);
