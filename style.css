@@ -43,12 +43,14 @@ canvas {
     width: 50px;
     height: 50px;
     background-repeat: no-repeat;
-    background-position: center;
 
     /* Disable background image selection */
     user-select: none;
     -webkit-user-select: none; /* Safari */
     -webkit-touch-callout: none; /* iOS Safari */
+}
+.button.pressed {
+    background-position-x: -50px;
 }
 
 /* Make touch areas slightly larger and allow overlapping */
@@ -61,29 +63,14 @@ canvas {
 #left {
     background-image: url('web-assets/button-left.png');
 }
-#left.pressed {
-    background-image: url('web-assets/button-left-pressed.png');
-}
-
 #right {
     background-image: url('web-assets/button-right.png');
 }
-#right.pressed {
-    background-image: url('web-assets/button-right-pressed.png');
-}
-
 #up {
     background-image: url('web-assets/button-up.png');
 }
-#up.pressed {
-    background-image: url('web-assets/button-up-pressed.png');
-}
-
 #action {
     background-image: url('web-assets/button-action.png');
-}
-#action.pressed {
-    background-image: url('web-assets/button-action-pressed.png');
 }
 
 #left, #right {
